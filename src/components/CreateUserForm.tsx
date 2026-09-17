@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createUserProfile, type CreateUserFormState } from "@/actions/users";
 import { Button } from "@/components/Button";
+import { roleLabels } from "@/lib/labels";
 
 const initialState: CreateUserFormState = { ok: false };
 
@@ -31,13 +32,13 @@ export default function CreateUserForm() {
         <legend className="text-sm font-medium text-ink">Roles</legend>
         <div className="mt-1 flex gap-4 text-sm">
           <label className="flex items-center gap-2">
-            <input type="checkbox" name="roles" value="ADMIN" /> admin
+            <input type="checkbox" name="roles" value="ADMIN" /> {roleLabels.ADMIN}
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" name="roles" value="OWNER" defaultChecked /> owner
+            <input type="checkbox" name="roles" value="OWNER" defaultChecked /> {roleLabels.OWNER}
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" name="roles" value="RENTER" /> renter
+            <input type="checkbox" name="roles" value="RENTER" /> {roleLabels.RENTER}
           </label>
         </div>
       </fieldset>

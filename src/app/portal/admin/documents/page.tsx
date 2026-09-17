@@ -4,6 +4,7 @@ import { documents } from "@/db/schema";
 import { deleteDocument } from "@/actions/documents";
 import UploadDocumentForm from "@/components/UploadDocumentForm";
 import { Button } from "@/components/Button";
+import { documentCategoryLabels, docVisibilityLabels } from "@/lib/labels";
 
 export default async function AdminDocumentsPage() {
   const docs = await db.query.documents.findMany({
@@ -37,8 +38,8 @@ export default async function AdminDocumentsPage() {
               {docs.map((d) => (
                 <tr key={d.id} className="border-b border-cream-dark last:border-0">
                   <td className="px-4 py-3 font-medium text-ink">{d.title}</td>
-                  <td className="px-4 py-3 text-ink-soft">{d.category.toLowerCase().replace("_", " ")}</td>
-                  <td className="px-4 py-3 text-ink-soft">{d.visibility.toLowerCase().replace("_", " ")}</td>
+                  <td className="px-4 py-3 text-ink-soft">{documentCategoryLabels[d.category]}</td>
+                  <td className="px-4 py-3 text-ink-soft">{docVisibilityLabels[d.visibility]}</td>
                   <td className="px-4 py-3 text-ink-soft">{d.uploadedBy.email}</td>
                   <td className="px-4 py-3 text-right">
                     <form action={deleteDocument.bind(null, d.id)}>

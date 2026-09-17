@@ -4,18 +4,10 @@ import { revalidatePath } from "next/cache";
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/db";
 import { announcements, residentProfiles, users } from "@/db/schema";
-import { getSession } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { announcementSchema } from "@/lib/validation";
 import { sendEmail, announcementEmailTemplate } from "@/lib/email";
 import type { AnnouncementPriority, DocVisibility } from "@/db/schema";
-
-async function requireAdmin() {
-  const session = await getSession();
-  if (!session?.user?.roles?.includes("ADMIN")) {
-    throw new Error("admin access required");
-  }
-  return session;
-}
 
 export type AnnouncementFormState = { ok: boolean; error?: string };
 

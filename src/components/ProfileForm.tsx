@@ -5,6 +5,8 @@ import { updateOwnProfile, type ProfileFormState } from "@/actions/profile";
 import { Button } from "@/components/Button";
 
 type Props = {
+  profileId: string;
+  hasAvatar: boolean;
   fullName: string;
   unit: string;
   address: string;
@@ -22,6 +24,25 @@ export default function ProfileForm(props: Props) {
 
   return (
     <form action={formAction} className="mt-6 max-w-xl space-y-5">
+      <div className="flex items-center gap-4">
+        {props.hasAvatar ? (
+          // eslint-disable-next-line @next/next/no-img-element -- served from our own DB-backed route, not an optimizable static asset
+          <img
+            src={`/portal/avatars/${props.profileId}`}
+            alt=""
+            className="h-16 w-16 rounded-full border border-cream-dark object-cover"
+          />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-cream-dark bg-cream-dark/40 text-xs text-ink-soft">
+            no photo
+          </div>
+        )}
+        <div>
+          <label className="block text-sm font-medium text-ink">Profile Picture</label>
+          <input name="avatar" type="file" accept="image/*" className="mt-1 text-sm" />
+        </div>
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-ink">Full Name</label>
         <input

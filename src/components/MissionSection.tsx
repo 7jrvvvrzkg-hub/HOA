@@ -9,12 +9,10 @@ export default function MissionSection() {
             place holder (mission statement heading)
           </h2>
           <p className="mt-4 text-ink-soft">
-            place holder (mission statement body — a paragraph describing the association&apos;s
-            purpose, values, and what it does for residents)
+            place holder (what the association does for residents and why it exists)
           </p>
           <p className="mt-4 text-ink-soft">
-            place holder (secondary paragraph — history of the community / what makes it
-            unique)
+            place holder (a bit about the community&apos;s history and what makes it unique)
           </p>
         </div>
 
@@ -36,7 +34,7 @@ export default function MissionSection() {
           </ul>
           <div className="mt-6 border-t border-cream-dark pt-4 text-sm text-ink-soft">
             <p className="font-medium text-ink">Office Hours</p>
-            <p>place holder (office hours, e.g. mon–fri 9am–5pm)</p>
+            <p>place holder (office hours, for example monday–friday 9am–5pm)</p>
           </div>
         </div>
       </div>

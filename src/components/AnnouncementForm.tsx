@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createAnnouncement, updateAnnouncement, type AnnouncementFormState } from "@/actions/announcements";
 import { Button } from "@/components/Button";
+import { announcementPriorityLabels, docVisibilityLabels } from "@/lib/labels";
 
 const initialState: AnnouncementFormState = { ok: false };
 
@@ -33,18 +34,17 @@ export default function AnnouncementForm({ existing }: { existing?: Existing }) 
       <div>
         <label className="block text-sm font-medium text-ink">Priority</label>
         <select name="priority" defaultValue={existing?.priority ?? "NORMAL"} className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-          <option value="NORMAL">normal</option>
-          <option value="IMPORTANT">important</option>
-          <option value="URGENT">urgent</option>
+          {Object.entries(announcementPriorityLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
         </select>
       </div>
       <div>
         <label className="block text-sm font-medium text-ink">Audience</label>
         <select name="audience" defaultValue={existing?.audience ?? "ALL_RESIDENTS"} className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-          <option value="ALL_RESIDENTS">all residents</option>
-          <option value="OWNERS_ONLY">owners only</option>
-          <option value="RENTERS_ONLY">renters only</option>
-          <option value="ADMIN_ONLY">admin only</option>
+          {Object.entries(docVisibilityLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
         </select>
       </div>
       <label className="flex items-center gap-2 text-sm">

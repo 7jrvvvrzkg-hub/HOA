@@ -23,6 +23,8 @@ export default async function ProfilePage() {
 
       {profile ? (
         <ProfileForm
+          profileId={profile.id}
+          hasAvatar={!!profile.avatarMimeType}
           fullName={profile.fullName}
           unit={profile.unit ?? ""}
           address={profile.address ?? ""}

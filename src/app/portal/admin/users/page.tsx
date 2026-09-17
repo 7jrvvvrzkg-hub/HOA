@@ -2,13 +2,20 @@ import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { getSession } from "@/lib/auth";
+import { deleteUserAccount } from "@/actions/users";
 import RoleChips from "@/components/RoleChips";
 import CreateUserForm from "@/components/CreateUserForm";
+import { Button } from "@/components/Button";
 
 export default async function AdminUsersPage() {
+  const session = await getSession();
   const allUsers = await db.query.users.findMany({
     orderBy: asc(users.createdAt),
-    with: { residentProfile: true, adminAccount: true },
+    with: {
+      residentProfile: { columns: { id: true, fullName: true, avatarMimeType: true } },
+      adminAccount: { columns: { fullName: true } },
+    },
   });
 
   return (
@@ -39,24 +46,45 @@ export default async function AdminUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {allUsers.map((u) => (
-                <tr key={u.id} className="border-b border-cream-dark last:border-0">
-                  <td className="px-4 py-3 font-medium text-ink">
-                    {u.adminAccount?.fullName ?? u.residentProfile?.fullName ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-ink-soft">{u.email}</td>
-                  <td className="px-4 py-3">
-                    <RoleChips userId={u.id} roles={u.roles} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {u.residentProfile && (
-                      <Link href={`/portal/admin/users/${u.residentProfile.id}`} className="text-primary hover:underline">
-                        View →
-                      </Link>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {allUsers.map((u) => {
+                const isSelf = u.id === session?.user.id;
+                return (
+                  <tr key={u.id} className="border-b border-cream-dark last:border-0">
+                    <td className="px-4 py-3 font-medium text-ink">
+                      <div className="flex items-center gap-2">
+                        {u.residentProfile?.avatarMimeType ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- served from our own DB-backed route, not an optimizable static asset
+                          <img
+                            src={`/portal/avatars/${u.residentProfile.id}`}
+                            alt=""
+                            className="h-7 w-7 rounded-full border border-cream-dark object-cover"
+                          />
+                        ) : null}
+                        {u.adminAccount?.fullName ?? u.residentProfile?.fullName ?? "—"}
+                        {isSelf && <span className="text-xs text-ink-soft/70">(you)</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-ink-soft">{u.email}</td>
+                    <td className="px-4 py-3">
+                      <RoleChips userId={u.id} roles={u.roles} isSelf={isSelf} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        {u.residentProfile && (
+                          <Link href={`/portal/admin/users/${u.residentProfile.id}`} className="text-primary hover:underline">
+                            View →
+                          </Link>
+                        )}
+                        {!isSelf && (
+                          <form action={deleteUserAccount.bind(null, u.id)}>
+                            <Button type="submit" size="sm" variant="danger">Delete</Button>
+                          </form>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

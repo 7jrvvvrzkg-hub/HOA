@@ -27,7 +27,21 @@ export default async function DirectoryPage() {
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {profiles.map((p) => (
           <div key={p.id} className="rounded-lg border border-cream-dark bg-white p-5">
-            <p className="font-semibold text-ink">{p.fullName}</p>
+            <div className="flex items-center gap-3">
+              {p.avatarMimeType ? (
+                // eslint-disable-next-line @next/next/no-img-element -- served from our own DB-backed route, not an optimizable static asset
+                <img
+                  src={`/portal/avatars/${p.id}`}
+                  alt=""
+                  className="h-10 w-10 rounded-full border border-cream-dark object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-cream-dark bg-cream-dark/40">
+                  <Users size={16} className="text-ink-soft" />
+                </div>
+              )}
+              <p className="font-semibold text-ink">{p.fullName}</p>
+            </div>
             <div className="mt-3 space-y-1.5 text-sm text-ink-soft">
               {(isAdmin || p.shareUnit) && p.unit && (
                 <p className="flex items-center gap-2">

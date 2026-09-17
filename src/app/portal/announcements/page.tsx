@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { db } from "@/db";
 import { announcements } from "@/db/schema";
 import { canView } from "@/lib/access";
+import { announcementPriorityLabels } from "@/lib/labels";
 import { Megaphone, Pin, Pencil } from "lucide-react";
 import clsx from "clsx";
 
@@ -48,7 +49,7 @@ export default async function AnnouncementsPage() {
               {a.pinned && <Pin size={14} className="text-accent" />}
               <h3 className="font-semibold text-ink">{a.title}</h3>
               <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", priorityTag[a.priority])}>
-                {a.priority.toLowerCase()}
+                {announcementPriorityLabels[a.priority]}
               </span>
               {!a.active && (
                 <span className="rounded-full bg-ink-soft/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-ink-soft">

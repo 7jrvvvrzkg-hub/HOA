@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getSession, getFreshRoles } from "@/lib/auth";
 import SignOutButton from "@/components/SignOutButton";
 import {
   LayoutDashboard,
@@ -15,7 +15,10 @@ export default async function PortalLayout({ children }: { children: React.React
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const roles = session.user.roles ?? [];
+  // Fresh from the database rather than the session's cached roles, so the
+  // "Admin Console" link disappears immediately if someone's admin access
+  // was just revoked, instead of only after they log back in.
+  const roles = await getFreshRoles(session.user.id);
   const isAdmin = roles.includes("ADMIN");
 
   const navItems = [
@@ -28,7 +31,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className="flex min-h-screen flex-col bg-cream lg:flex-row">
-      <aside className="flex flex-col justify-between border-b border-cream-dark bg-primary text-cream lg:h-screen lg:w-64 lg:border-b-0 lg:border-r">
+      <aside className="flex flex-col justify-between border-b border-cream-dark bg-primary text-cream lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-r">
         <div>
           <div className="px-6 py-5">
             <Link href="/" className="text-lg font-semibold">

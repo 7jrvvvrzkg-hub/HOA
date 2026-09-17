@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { uploadDocument, type DocumentFormState } from "@/actions/documents";
 import { Button } from "@/components/Button";
+import { documentCategoryLabels, docVisibilityLabels } from "@/lib/labels";
 
 const initialState: DocumentFormState = { ok: false };
 
@@ -18,25 +19,28 @@ export default function UploadDocumentForm() {
       <div>
         <label className="block text-sm font-medium text-ink">Category</label>
         <select name="category" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-          <option value="BYLAWS">bylaws</option>
-          <option value="MEETING_MINUTES">meeting minutes</option>
-          <option value="FORMS">forms</option>
-          <option value="FINANCIAL">financial</option>
-          <option value="OTHER">other</option>
+          {Object.entries(documentCategoryLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
         </select>
       </div>
       <div>
         <label className="block text-sm font-medium text-ink">Visibility</label>
         <select name="visibility" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-          <option value="ALL_RESIDENTS">all residents</option>
-          <option value="OWNERS_ONLY">owners only</option>
-          <option value="RENTERS_ONLY">renters only</option>
-          <option value="ADMIN_ONLY">admin only</option>
+          {Object.entries(docVisibilityLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
         </select>
       </div>
       <div className="sm:col-span-2">
-        <label className="block text-sm font-medium text-ink">File (max 8MB for this test deploy)</label>
-        <input name="file" type="file" required className="mt-1 w-full text-sm" />
+        <label className="block text-sm font-medium text-ink">File (any document, image, or common office format — max 20MB)</label>
+        <input
+          name="file"
+          type="file"
+          required
+          accept=".pdf,.doc,.docx,.pages,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,image/*"
+          className="mt-1 w-full text-sm"
+        />
       </div>
       <label className="flex items-center gap-2 text-sm sm:col-span-2">
         <input type="checkbox" name="notifyAffected" /> Email residents who can view this document

@@ -3,15 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { adminNotes, communicationLogs } from "@/db/schema";
-import { getSession } from "@/lib/auth";
-
-async function requireAdmin() {
-  const session = await getSession();
-  if (!session?.user?.roles?.includes("ADMIN")) {
-    throw new Error("admin access required");
-  }
-  return session;
-}
+import { requireAdmin } from "@/lib/auth";
 
 export async function addAdminNote(profileId: string, formData: FormData) {
   const session = await requireAdmin();

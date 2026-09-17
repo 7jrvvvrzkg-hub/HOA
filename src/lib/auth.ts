@@ -65,3 +65,28 @@ export const authOptions: NextAuthOptions = {
 export function getSession() {
   return getServerSession(authOptions);
 }
+
+/** The session's roles are a snapshot taken at login and baked into the JWT,
+ * so they go stale the moment an admin changes someone's role tags — that
+ * user's own token still says "ADMIN" until they log out and back in. Any
+ * check that gates a real action (not just what to render) needs the roles
+ * as they are in the database right now, not what's in the token. */
+export async function getFreshRoles(userId: string): Promise<RoleTag[]> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { roles: true },
+  });
+  return (user?.roles as RoleTag[]) ?? [];
+}
+
+/** Shared admin gate for every mutating server action. Always re-checks the
+ * database (see getFreshRoles) instead of trusting the session's cached
+ * roles, so a role change by another admin takes effect immediately rather
+ * than after the affected user's next login. */
+export async function requireAdmin() {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("not signed in");
+  const roles = await getFreshRoles(session.user.id);
+  if (!roles.includes("ADMIN")) throw new Error("admin access required");
+  return session;
+}

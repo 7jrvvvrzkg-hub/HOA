@@ -74,6 +74,11 @@ export const residentProfiles = pgTable("resident_profiles", {
   sharePhone: boolean("share_phone").notNull().default(false),
   shareContactEmail: boolean("share_contact_email").notNull().default(false),
   portalAccessLevel: portalAccessLevelEnum("portal_access_level").notNull().default("STANDARD"),
+  // A profile picture, stored the same way documents are — directly in
+  // Postgres, so there's still nothing extra to configure. Always visible
+  // (like a name), not gated by the directory-sharing toggles above.
+  avatarData: bytea("avatar_data"),
+  avatarMimeType: text("avatar_mime_type"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

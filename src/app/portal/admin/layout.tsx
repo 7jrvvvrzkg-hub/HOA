@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSession } from "@/lib/auth";
+import { getSession, getFreshRoles } from "@/lib/auth";
 import { Users, FileText, Megaphone, Inbox, ShieldCheck } from "lucide-react";
 
 const tabs = [
@@ -17,7 +17,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Proxy matcher change should never be the only thing standing between a
   // resident and the admin console.
   const session = await getSession();
-  if (!session?.user.roles?.includes("ADMIN")) {
+  if (!session) redirect("/login");
+  // Fresh from the database, not the session's cached roles — see the
+  // comment on setUserRoles in src/actions/users.ts for why that matters.
+  const roles = await getFreshRoles(session.user.id);
+  if (!roles.includes("ADMIN")) {
     redirect("/portal");
   }
 

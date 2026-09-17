@@ -4,17 +4,9 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { documents, residentProfiles, users } from "@/db/schema";
-import { getSession } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { sendEmail, documentUpdateTemplate } from "@/lib/email";
 import type { DocCategory, DocVisibility } from "@/db/schema";
-
-async function requireAdmin() {
-  const session = await getSession();
-  if (!session?.user?.roles?.includes("ADMIN")) {
-    throw new Error("admin access required");
-  }
-  return session;
-}
 
 export type DocumentFormState = { ok: boolean; error?: string };
 
@@ -37,9 +29,12 @@ export async function uploadDocument(
     return { ok: false, error: "choose a file (form/pdf/doc) to upload" };
   }
   // Stored directly in Postgres for a zero-extra-service test deploy — see
-  // README for swapping to object storage once real files get large.
-  if (file.size > 8 * 1024 * 1024) {
-    return { ok: false, error: "file is larger than the 8MB test-deploy limit" };
+  // README for swapping to object storage once real files get large. No
+  // file-type restriction beyond what the browser's file picker suggests
+  // (see the `accept` list on the upload form) — any document, image, or
+  // office file type is accepted; only size is capped here.
+  if (file.size > 20 * 1024 * 1024) {
+    return { ok: false, error: "file is larger than the 20MB limit" };
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());

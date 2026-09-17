@@ -3,15 +3,8 @@ import { getSession } from "@/lib/auth";
 import { db } from "@/db";
 import { documents } from "@/db/schema";
 import { canView } from "@/lib/access";
+import { documentCategoryLabels } from "@/lib/labels";
 import { Download, FileText, Lock } from "lucide-react";
-
-const categoryLabels: Record<string, string> = {
-  BYLAWS: "Bylaws",
-  MEETING_MINUTES: "Meeting Minutes",
-  FORMS: "Forms",
-  FINANCIAL: "Financial",
-  OTHER: "Other",
-};
 
 export default async function DocumentsPage() {
   const session = await getSession();
@@ -44,7 +37,7 @@ export default async function DocumentsPage() {
           {Object.entries(byCategory).map(([category, docs]) => (
             <div key={category}>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft">
-                {categoryLabels[category] ?? category}
+                {documentCategoryLabels[category as keyof typeof documentCategoryLabels] ?? category}
               </h2>
               <ul className="mt-3 divide-y divide-cream-dark rounded-lg border border-cream-dark bg-white">
                 {docs.map((doc) => (

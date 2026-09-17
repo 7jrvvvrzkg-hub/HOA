@@ -49,7 +49,7 @@ async function main() {
     await db.insert(residentProfiles).values({
       userId: admin2.id,
       fullName: "place holder (admin 2 name)",
-      unit: "unit place holder (e.g. 4B)",
+      unit: "unit place holder (for example 4B)",
       phone: "place holder (phone)",
       shareUnit: true,
       portalAccessLevel: "FULL",
@@ -58,10 +58,10 @@ async function main() {
 
   // 3-6. owners
   const owners = [
-    { email: "owner1@hoa.test", unit: "unit place holder (e.g. 101)" },
-    { email: "owner2@hoa.test", unit: "unit place holder (e.g. 102)" },
-    { email: "owner3@hoa.test", unit: "unit place holder (e.g. 205)" },
-    { email: "owner4@hoa.test", unit: "unit place holder (e.g. 310)" },
+    { email: "owner1@hoa.test", unit: "unit place holder (for example 101)" },
+    { email: "owner2@hoa.test", unit: "unit place holder (for example 102)" },
+    { email: "owner3@hoa.test", unit: "unit place holder (for example 205)" },
+    { email: "owner4@hoa.test", unit: "unit place holder (for example 310)" },
   ];
   for (const [i, o] of owners.entries()) {
     const user = await findOrCreateUser(o.email, ownerHash, ["OWNER"]);
@@ -80,10 +80,10 @@ async function main() {
 
   // 7-10. renters
   const renters = [
-    { email: "renter1@hoa.test", unit: "unit place holder (e.g. 103)" },
-    { email: "renter2@hoa.test", unit: "unit place holder (e.g. 104)" },
-    { email: "renter3@hoa.test", unit: "unit place holder (e.g. 206)" },
-    { email: "renter4@hoa.test", unit: "unit place holder (e.g. 311)" },
+    { email: "renter1@hoa.test", unit: "unit place holder (for example 103)" },
+    { email: "renter2@hoa.test", unit: "unit place holder (for example 104)" },
+    { email: "renter3@hoa.test", unit: "unit place holder (for example 206)" },
+    { email: "renter4@hoa.test", unit: "unit place holder (for example 311)" },
   ];
   for (const [i, r] of renters.entries()) {
     const user = await findOrCreateUser(r.email, renterHash, ["RENTER"]);

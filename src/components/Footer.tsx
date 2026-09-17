@@ -26,7 +26,7 @@ export default function Footer() {
           </div>
         </div>
         <p className="mt-8 border-t border-cream/10 pt-6 text-xs text-cream/60">
-          place holder (copyright line, e.g. © year hoa name. all rights reserved.)
+          place holder (copyright line — © year, hoa name, all rights reserved)
         </p>
       </div>
     </footer>

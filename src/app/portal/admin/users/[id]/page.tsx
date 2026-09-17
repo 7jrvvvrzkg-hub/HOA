@@ -3,12 +3,15 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { residentProfiles } from "@/db/schema";
 import { addAdminNote, addCommunicationLog } from "@/actions/notes";
-import { updateResidentAccessLevel } from "@/actions/users";
+import { updateResidentAccessLevel, deleteUserAccount } from "@/actions/users";
+import { getSession } from "@/lib/auth";
+import { accessLevelLabels, communicationChannelLabels } from "@/lib/labels";
 import { Button } from "@/components/Button";
 import { StickyNote, Phone } from "lucide-react";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const session = await getSession();
 
   const profile = await db.query.residentProfiles.findFirst({
     where: eq(residentProfiles.id, id),
@@ -20,6 +23,8 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   });
   if (!profile) notFound();
 
+  const isSelf = profile.userId === session?.user.id;
+
   async function setAccessLevel(formData: FormData) {
     "use server";
     await updateResidentAccessLevel(id, formData.get("level") as never);
@@ -28,8 +33,20 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-primary">{profile.fullName}</h2>
-        <p className="text-sm text-ink-soft">{profile.user.email}</p>
+        <div className="flex items-center gap-3">
+          {profile.avatarMimeType ? (
+            // eslint-disable-next-line @next/next/no-img-element -- served from our own DB-backed route, not an optimizable static asset
+            <img
+              src={`/portal/avatars/${profile.id}`}
+              alt=""
+              className="h-12 w-12 rounded-full border border-cream-dark object-cover"
+            />
+          ) : null}
+          <div>
+            <h2 className="text-lg font-semibold text-primary">{profile.fullName}</h2>
+            <p className="text-sm text-ink-soft">{profile.user.email}</p>
+          </div>
+        </div>
         <p className="mt-1 text-xs uppercase tracking-wide text-ink-soft">
           Roles: {profile.user.roles.join(", ")}
         </p>
@@ -37,9 +54,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <form action={setAccessLevel} className="mt-3 flex items-center gap-2">
           <label className="text-sm text-ink-soft">Portal Access Level</label>
           <select name="level" defaultValue={profile.portalAccessLevel} className="rounded-md border border-cream-dark px-2 py-1 text-sm">
-            <option value="FULL">full</option>
-            <option value="STANDARD">standard</option>
-            <option value="LIMITED">limited</option>
+            {Object.entries(accessLevelLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
           <Button type="submit" size="sm" variant="outline">
             Save
@@ -73,10 +90,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </h3>
         <form action={addCommunicationLog.bind(null, profile.id)} className="mt-3 flex flex-wrap gap-2">
           <select name="channel" className="rounded-md border border-cream-dark px-2 py-2 text-sm">
-            <option value="email">email</option>
-            <option value="phone">phone</option>
-            <option value="in-person">in-person</option>
-            <option value="other">other</option>
+            {Object.entries(communicationChannelLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
           <input name="summary" placeholder="What was discussed..." className="flex-1 rounded-md border border-cream-dark px-3 py-2 text-sm" />
           <Button type="submit" size="sm">Log</Button>
@@ -84,7 +100,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <ul className="mt-3 space-y-2">
           {profile.communicationLogs.map((l) => (
             <li key={l.id} className="rounded-md border border-cream-dark bg-white p-3 text-sm">
-              <p className="text-ink"><span className="font-medium">{l.channel}</span> — {l.summary}</p>
+              <p className="text-ink"><span className="font-medium">{communicationChannelLabels[l.channel] ?? l.channel}</span> — {l.summary}</p>
               <p className="mt-1 text-xs text-ink-soft">
                 {l.author.email} · {l.createdAt.toLocaleDateString("en-US")}
               </p>
@@ -92,6 +108,18 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           ))}
         </ul>
       </div>
+
+      {!isSelf && (
+        <div className="rounded-lg border border-danger/30 bg-danger/5 p-4">
+          <h3 className="font-semibold text-danger">Danger Zone</h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            Permanently deletes this login and profile. This can&apos;t be undone.
+          </p>
+          <form action={deleteUserAccount.bind(null, profile.userId)} className="mt-3">
+            <Button type="submit" size="sm" variant="danger">Delete Account</Button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

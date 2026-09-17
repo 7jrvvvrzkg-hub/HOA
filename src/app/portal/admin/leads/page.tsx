@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { leads } from "@/db/schema";
 import { updateLeadStatus, assignLeadToSelf } from "@/actions/leads";
 import { Button } from "@/components/Button";
+import { leadStatusLabels } from "@/lib/labels";
 import clsx from "clsx";
 
 const statusTag: Record<string, string> = {
@@ -33,7 +34,7 @@ export default async function AdminLeadsPage() {
                 {lead.phone && <p className="text-xs text-ink-soft">{lead.phone}</p>}
               </div>
               <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", statusTag[lead.status])}>
-                {lead.status.toLowerCase().replace("_", " ")}
+                {leadStatusLabels[lead.status]}
               </span>
             </div>
             <p className="mt-2 text-sm text-ink-soft">{lead.message}</p>
@@ -43,9 +44,9 @@ export default async function AdminLeadsPage() {
                 await updateLeadStatus(lead.id, formData.get("status") as never);
               }} className="flex items-center gap-2">
                 <select name="status" defaultValue={lead.status} className="rounded-md border border-cream-dark px-2 py-1 text-sm">
-                  <option value="NEW">new</option>
-                  <option value="IN_PROGRESS">in progress</option>
-                  <option value="RESOLVED">resolved</option>
+                  {Object.entries(leadStatusLabels).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
                 </select>
                 <Button type="submit" size="sm" variant="outline">Update</Button>
               </form>

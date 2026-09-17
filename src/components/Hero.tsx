@@ -11,7 +11,7 @@ export default function Hero() {
           place holder (hero headline — welcome message for the community)
         </h1>
         <p className="max-w-xl text-base text-cream/85 sm:text-lg">
-          place holder (hero subheading — one or two sentences about the community, e.g. amenities, location, character)
+          place holder (a sentence or two about the community — amenities, location, character)
         </p>
         <div className="flex flex-wrap gap-3">
           <ButtonLink href="/login" variant="accent">
