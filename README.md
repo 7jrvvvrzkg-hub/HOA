@@ -136,4 +136,4 @@ version: `admin1@hoa.test` / `Admin123!`, `owner1@hoa.test` / `Owner123!`,
 - Add real Resend templates (the current ones are functional placeholders
   with `place holder (...)` copy, matching the rest of the site).
 - Consider moving from NextAuth v4 to a newer major version at some point;
-  v4 is stable and fully supported, this just isn't the newest option.
+  v4 is stable and fully supported, this just isn't the newest option. 
