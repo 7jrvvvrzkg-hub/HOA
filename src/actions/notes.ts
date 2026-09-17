@@ -12,6 +12,7 @@ export async function addAdminNote(profileId: string, formData: FormData) {
 
   await db.insert(adminNotes).values({ profileId, authorId: session.user.id, body });
   revalidatePath(`/portal/admin/users/${profileId}`);
+  revalidatePath("/portal/directory");
 }
 
 export async function addCommunicationLog(profileId: string, formData: FormData) {

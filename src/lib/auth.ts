@@ -79,6 +79,15 @@ export async function getFreshRoles(userId: string): Promise<RoleTag[]> {
   return (user?.roles as RoleTag[]) ?? [];
 }
 
+/** Anyone signed in at all — owner, renter, or admin. Used where the action
+ * itself (not the role) is what narrows what happens, e.g. uploading a
+ * document: everyone can do it, but what it defaults to differs by role. */
+export async function requireSignedIn() {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("not signed in");
+  return session;
+}
+
 /** Shared admin gate for every mutating server action. Always re-checks the
  * database (see getFreshRoles) instead of trusting the session's cached
  * roles, so a role change by another admin takes effect immediately rather

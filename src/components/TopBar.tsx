@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Menu, X, FileText, LogIn, LogOut, Mail, LayoutDashboard } from "lucide-react";
+import { Menu, X, LogIn, LogOut, Mail, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 import { ButtonLink, Button } from "@/components/Button";
 
@@ -38,9 +38,6 @@ export default function TopBar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <ButtonLink href="/portal/documents" variant="ghostInvert" size="sm">
-            <FileText size={16} /> Document Access
-          </ButtonLink>
           <a href="#contact">
             <Button variant="ghostInvert" size="sm">
               <Mail size={16} /> Contact Us
@@ -89,9 +86,6 @@ export default function TopBar() {
           <a href="#contact" onClick={() => setOpen(false)} className="flex items-center gap-2">
             <Mail size={16} /> Contact Us
           </a>
-          <Link href="/portal/documents" onClick={() => setOpen(false)} className="flex items-center gap-2">
-            <FileText size={16} /> Document Access
-          </Link>
           {session ? (
             <>
               <Link href="/portal" onClick={() => setOpen(false)} className="flex items-center gap-2">

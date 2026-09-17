@@ -25,9 +25,15 @@ export default function Footer() {
             <p className="text-sm">place holder (email)</p>
           </div>
         </div>
-        <p className="mt-8 border-t border-cream/10 pt-6 text-xs text-cream/60">
-          place holder (copyright line — © year, hoa name, all rights reserved)
-        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t border-cream/10 pt-6 text-xs text-cream/60">
+          <p>place holder (copyright line — © year, hoa name, all rights reserved)</p>
+          <p>
+            Made by{" "}
+            <a href="https://bownode.com" target="_blank" rel="noopener noreferrer" className="text-cream/80 hover:text-cream hover:underline">
+              Bownode, LLC
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

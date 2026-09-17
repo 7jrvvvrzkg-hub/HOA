@@ -1,37 +1,44 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/Button";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") ?? "/portal";
-  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // A failed sign-in redirects back here with "?error=CredentialsSignin" —
+  // see the comment on signIn() below for why this reads from the URL
+  // instead of a response value. Read straight off the URL during render
+  // rather than mirrored into state, so there's no extra render pass.
+  const error = searchParams.get("error") ? "Incorrect email or password." : null;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
-    setError(null);
     const formData = new FormData(e.currentTarget);
 
-    const res = await signIn("credentials", {
+    // A real (non-JS) redirect rather than redirect:false + router.push().
+    // With redirect:false, the sign-in cookie is set by the credentials
+    // callback response, but the *next* request (the router.push to
+    // /portal, and especially a fast click straight through to another
+    // portal page right after) could go out before the browser has
+    // actually persisted that cookie — a real, if narrow, race, and
+    // exactly what clicking through quickly was tripping. Letting NextAuth
+    // do the redirect itself means the cookie is set and used within the
+    // same browser-managed navigation, so there's nothing left to race.
+    await signIn("credentials", {
       email: formData.get("email"),
       password: formData.get("password"),
-      redirect: false,
+      redirect: true,
+      callbackUrl: from,
     });
-
+    // Only reached if signIn itself throws before redirecting (network
+    // error, etc.) — a failed login redirects back here with ?error= instead.
     setPending(false);
-    if (res?.error) {
-      setError("Incorrect email or password.");
-      return;
-    }
-    router.push(from);
-    router.refresh();
   }
 
   return (

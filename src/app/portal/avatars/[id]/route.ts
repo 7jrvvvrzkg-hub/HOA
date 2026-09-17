@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { db } from "@/db";
 import { residentProfiles } from "@/db/schema";
+import { SAFE_IMAGE_MIME_TYPES } from "@/lib/fileTypes";
 
 // Profile pictures aren't gated by the directory-sharing toggles (they're
 // treated like a name, not a private detail), so the only check here is
@@ -24,10 +25,18 @@ export async function GET(
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
+  // Re-check against the same allow-list enforced on upload (see
+  // src/lib/fileTypes.ts) rather than trusting whatever's in the column —
+  // cheap insurance against any row that predates that check.
+  if (!SAFE_IMAGE_MIME_TYPES.has(profile.avatarMimeType)) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
   return new NextResponse(new Uint8Array(profile.avatarData), {
     headers: {
       "Content-Type": profile.avatarMimeType,
       "Cache-Control": "private, max-age=300",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

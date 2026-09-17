@@ -13,6 +13,7 @@ import {
   integer,
   pgEnum,
   customType,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -168,6 +169,23 @@ export const communicationLogs = pgTable("communication_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// A note an admin leaves for one resident under one document category —
+// "please upload your updated insurance certificate" and the like. One
+// slot per resident+category (the admin edits it in place rather than
+// piling up a thread), shown to that resident on their Documents page.
+export const documentCategoryNotes = pgTable(
+  "document_category_notes",
+  {
+    id: id(),
+    residentUserId: text("resident_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    category: docCategoryEnum("category").notNull(),
+    message: text("message").notNull(),
+    authorId: text("author_id").notNull().references(() => users.id),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.residentUserId, table.category)]
+);
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   residentProfile: one(residentProfiles, {
     fields: [users.id],
@@ -182,6 +200,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   announcementsWritten: many(announcements),
   adminNotesWritten: many(adminNotes),
   communicationLogs: many(communicationLogs),
+  documentCategoryNotes: many(documentCategoryNotes, { relationName: "documentCategoryNoteResident" }),
 }));
 
 export const residentProfilesRelations = relations(residentProfiles, ({ one, many }) => ({
@@ -213,6 +232,15 @@ export const announcementsRelations = relations(announcements, ({ one }) => ({
 
 export const leadsRelations = relations(leads, ({ one }) => ({
   assignedTo: one(users, { fields: [leads.assignedToId], references: [users.id] }),
+}));
+
+export const documentCategoryNotesRelations = relations(documentCategoryNotes, ({ one }) => ({
+  resident: one(users, {
+    fields: [documentCategoryNotes.residentUserId],
+    references: [users.id],
+    relationName: "documentCategoryNoteResident",
+  }),
+  author: one(users, { fields: [documentCategoryNotes.authorId], references: [users.id] }),
 }));
 
 export const adminNotesRelations = relations(adminNotes, ({ one }) => ({

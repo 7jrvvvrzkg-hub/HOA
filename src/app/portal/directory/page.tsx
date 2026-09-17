@@ -1,17 +1,29 @@
 import { asc } from "drizzle-orm";
-import { getSession } from "@/lib/auth";
+import Link from "next/link";
+import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { residentProfiles } from "@/db/schema";
-import { Users, Mail, Phone, Home } from "lucide-react";
+import { addAdminNote } from "@/actions/notes";
+import { Button } from "@/components/Button";
+import { Users, Mail, Phone, Home, StickyNote } from "lucide-react";
 
 export default async function DirectoryPage() {
   const session = await getSession();
-  const roles = session!.user.roles ?? [];
+  // Fresh from the database, not the session's cached roles — same
+  // reasoning as every other access check in this app (see src/lib/auth.ts).
+  const roles = await getFreshRoles(session!.user.id);
   const isAdmin = roles.includes("ADMIN");
 
+  // adminNotes is always fetched here, but a Server Component only ever
+  // sends the client what its JSX actually renders — and the JSX below
+  // only renders this for an admin viewer, so a resident's page never
+  // includes it regardless.
   const profiles = await db.query.residentProfiles.findMany({
     orderBy: asc(residentProfiles.fullName),
-    with: { user: { columns: { email: true } } },
+    with: {
+      user: { columns: { email: true } },
+      adminNotes: { orderBy: (t, { desc }) => desc(t.createdAt), with: { author: { columns: { email: true } } } },
+    },
   });
 
   return (
@@ -64,6 +76,35 @@ export default async function DirectoryPage() {
                 </p>
               )}
             </div>
+
+            {isAdmin && (
+              <div className="mt-4 border-t border-cream-dark pt-3">
+                <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-soft">
+                  <StickyNote size={12} className="text-accent-dark" /> Admin Notes (private)
+                </p>
+                {p.adminNotes[0] && (
+                  <p className="mt-1.5 line-clamp-2 text-sm text-ink" title={p.adminNotes[0].body}>
+                    {p.adminNotes[0].body}
+                  </p>
+                )}
+                <form action={addAdminNote.bind(null, p.id)} className="mt-2 flex gap-1.5">
+                  <input
+                    name="body"
+                    placeholder="Jot something down…"
+                    className="min-w-0 flex-1 rounded-md border border-cream-dark px-2 py-1 text-xs"
+                  />
+                  <Button type="submit" size="sm" variant="outline">Add</Button>
+                </form>
+                {p.adminNotes.length > 0 && (
+                  <Link
+                    href={`/portal/admin/users/${p.id}`}
+                    className="mt-1.5 inline-block text-xs text-primary hover:underline"
+                  >
+                    View all {p.adminNotes.length} note{p.adminNotes.length === 1 ? "" : "s"} →
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

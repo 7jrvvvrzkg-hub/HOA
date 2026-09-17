@@ -8,10 +8,16 @@ import { compressImageIfNeeded } from "@/lib/compressImage";
 
 const initialState: DocumentFormState = { ok: false };
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
+const FILE_ACCEPT = ".pdf,.doc,.docx,.pages,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,image/jpeg,image/png,image/webp,image/gif";
 
 export default function UploadDocumentForm({
+  isAdmin = false,
   residents = [],
 }: {
+  /** Everyone can upload, but only an admin gets to choose who sees it — a
+   * resident's own upload is always private to just them and admins, so the
+   * visibility/resident-picker controls below only render for an admin. */
+  isAdmin?: boolean;
   /** Passed in so a "Personal" document can be pointed at one resident.
    * Empty on pages that don't have this list handy — the personal option
    * just won't have anyone to pick until it does. */
@@ -56,7 +62,7 @@ export default function UploadDocumentForm({
         <label className="block text-sm font-medium text-ink">Title</label>
         <input name="title" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm" />
       </div>
-      <div>
+      <div className={isAdmin ? "" : "sm:col-span-2"}>
         <label className="block text-sm font-medium text-ink">Category</label>
         <select name="category" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
           {Object.entries(documentCategoryLabels).map(([value, label]) => (
@@ -64,37 +70,46 @@ export default function UploadDocumentForm({
           ))}
         </select>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-ink">Visibility</label>
-        <select
-          name="visibility"
-          required
-          value={visibility}
-          onChange={(e) => setVisibility(e.target.value)}
-          className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm"
-        >
-          {Object.entries(docVisibilityLabels).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-      </div>
-      {visibility === "PERSONAL" && (
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-ink">Which Resident</label>
-          <select name="assignedToId" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-            <option value="">Choose a resident…</option>
-            {residents.map((r) => (
-              <option key={r.id} value={r.id}>{r.label}</option>
-            ))}
-          </select>
-          {residents.length === 0 && (
-            <p className="mt-1 text-xs text-danger">No residents to choose from yet.</p>
+      {isAdmin ? (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-ink">Visibility</label>
+            <select
+              name="visibility"
+              required
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
+              className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm"
+            >
+              {Object.entries(docVisibilityLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+          {visibility === "PERSONAL" && (
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-ink">Which Resident</label>
+              <select name="assignedToId" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
+                <option value="">Choose a resident…</option>
+                {residents.map((r) => (
+                  <option key={r.id} value={r.id}>{r.label}</option>
+                ))}
+              </select>
+              {residents.length === 0 && (
+                <p className="mt-1 text-xs text-danger">No residents to choose from yet.</p>
+              )}
+              <p className="mt-1 text-xs text-ink-soft">
+                Only this resident (and admins) will be able to see this document — for something
+                like a lease or an individual contract rather than a building-wide document.
+              </p>
+            </div>
           )}
-          <p className="mt-1 text-xs text-ink-soft">
-            Only this resident (and admins) will be able to see this document — for something
-            like a lease or an individual contract rather than a building-wide document.
-          </p>
-        </div>
+        </>
+      ) : (
+        <p className="sm:col-span-2 -mt-1 text-xs text-ink-soft">
+          Only you and the admin team can see what you upload here — it&apos;s just for the two of you,
+          like a personal lease or a form you&apos;re sending in.
+        </p>
       )}
       <div className="sm:col-span-2">
         <label className="block text-sm font-medium text-ink">File (any document, image, or common office format — max 4MB)</label>
@@ -103,16 +118,18 @@ export default function UploadDocumentForm({
           name="file"
           type="file"
           required
-          accept=".pdf,.doc,.docx,.pages,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,image/*"
+          accept={FILE_ACCEPT}
           onChange={handleFileChange}
           className="mt-1 w-full text-sm"
         />
         {processing && <p className="mt-1 text-xs text-ink-soft">Preparing file…</p>}
         {fileError && <p className="mt-1 text-xs text-danger">{fileError}</p>}
       </div>
-      <label className="flex items-center gap-2 text-sm sm:col-span-2">
-        <input type="checkbox" name="notifyAffected" /> Email residents who can view this document
-      </label>
+      {isAdmin && (
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
+          <input type="checkbox" name="notifyAffected" /> Email residents who can view this document
+        </label>
+      )}
 
       {state.error && <p className="text-sm text-danger sm:col-span-2">{state.error}</p>}
       {state.ok && <p className="text-sm text-primary sm:col-span-2">Document uploaded.</p>}

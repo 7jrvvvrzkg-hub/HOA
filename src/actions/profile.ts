@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { residentProfiles } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { profileUpdateSchema } from "@/lib/validation";
+import { isAllowedAvatarImage } from "@/lib/fileTypes";
 
 export type ProfileFormState = { ok: boolean; error?: string };
 
@@ -38,8 +39,12 @@ export async function updateOwnProfile(
   const avatar = formData.get("avatar") as File | null;
   let avatarUpdate: { avatarData: Buffer; avatarMimeType: string } | null = null;
   if (avatar && avatar.size > 0) {
-    if (!avatar.type.startsWith("image/")) {
-      return { ok: false, error: "profile picture has to be an image file" };
+    // Deliberately narrower than "starts with image/" — that would also let
+    // an SVG through, which (unlike a real photo) is allowed to carry a
+    // <script> tag that would then run as this site the next time anyone
+    // opens that avatar directly. See src/lib/fileTypes.ts.
+    if (!isAllowedAvatarImage(avatar.type, avatar.name)) {
+      return { ok: false, error: "profile picture has to be a JPEG, PNG, WebP, or GIF image" };
     }
     if (avatar.size > MAX_AVATAR_BYTES) {
       return { ok: false, error: "profile picture is larger than the 4MB limit" };

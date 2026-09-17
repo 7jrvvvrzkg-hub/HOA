@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { residentProfiles } from "@/db/schema";
+import { residentProfiles, documentCategoryNotes } from "@/db/schema";
 import { addAdminNote, addCommunicationLog } from "@/actions/notes";
+import { setDocumentCategoryNote } from "@/actions/documentNotes";
 import { updateResidentAccessLevel, deleteUserAccount } from "@/actions/users";
 import { getSession } from "@/lib/auth";
-import { accessLevelLabels, communicationChannelLabels } from "@/lib/labels";
+import { accessLevelLabels, communicationChannelLabels, documentCategoryLabels } from "@/lib/labels";
 import { Button } from "@/components/Button";
-import { StickyNote, Phone } from "lucide-react";
+import { StickyNote, Phone, FileText } from "lucide-react";
+import type { DocCategory } from "@/db/schema";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,6 +24,11 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     },
   });
   if (!profile) notFound();
+
+  const categoryNotes = await db.query.documentCategoryNotes.findMany({
+    where: eq(documentCategoryNotes.residentUserId, profile.userId),
+  });
+  const noteByCategory = new Map(categoryNotes.map((n) => [n.category, n.message]));
 
   const isSelf = profile.userId === session?.user.id;
 
@@ -82,6 +89,37 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             </li>
           ))}
         </ul>
+      </div>
+
+      <div>
+        <h3 className="flex items-center gap-2 font-semibold text-ink">
+          <FileText size={18} className="text-accent-dark" /> Document Notes (shown to this resident)
+        </h3>
+        <p className="mt-1 text-sm text-ink-soft">
+          Unlike the notes above, this one isn&apos;t private — each note shows up for{" "}
+          {profile.fullName} under that category on their own Documents page, e.g. asking them to
+          upload or update something.
+        </p>
+        <div className="mt-3 space-y-3">
+          {(Object.keys(documentCategoryLabels) as DocCategory[]).map((category) => (
+            <form
+              key={category}
+              action={setDocumentCategoryNote.bind(null, profile.userId, category)}
+              className="flex flex-wrap items-center gap-2 rounded-md border border-cream-dark bg-white p-3"
+            >
+              <span className="w-40 shrink-0 text-sm font-medium text-ink">
+                {documentCategoryLabels[category]}
+              </span>
+              <input
+                name="message"
+                defaultValue={noteByCategory.get(category) ?? ""}
+                placeholder="No note — leave blank to clear"
+                className="min-w-[12rem] flex-1 rounded-md border border-cream-dark px-3 py-1.5 text-sm"
+              />
+              <Button type="submit" size="sm" variant="outline">Save</Button>
+            </form>
+          ))}
+        </div>
       </div>
 
       <div>
