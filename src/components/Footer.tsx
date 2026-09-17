@@ -10,17 +10,17 @@ export default function Footer() {
             <p className="mt-2 text-sm">place holder (short tagline)</p>
           </div>
           <div>
-            <p className="font-semibold text-cream">place holder (quick links heading)</p>
+            <p className="font-semibold text-cream">Quick Links</p>
             <ul className="mt-2 space-y-1 text-sm">
-              <li><a href="#mission">place holder (mission)</a></li>
-              <li><a href="#announcements">place holder (announcements)</a></li>
-              <li><Link href="/login">place holder (resident login)</Link></li>
-              <li><a href="#contact">place holder (contact us)</a></li>
+              <li><a href="#mission">Mission</a></li>
+              <li><a href="#announcements">Announcements</a></li>
+              <li><Link href="/login">Resident Login</Link></li>
+              <li><a href="#contact">Contact Us</a></li>
             </ul>
           </div>
           <div>
-            <p className="font-semibold text-cream">place holder (contact heading)</p>
-            <p className="mt-2 text-sm">place holder (address)</p>
+            <p className="font-semibold text-cream">Contact</p>
+            <p className="mt-2 text-sm">230 West Tazewell Street, Norfolk, VA</p>
             <p className="text-sm">place holder (phone)</p>
             <p className="text-sm">place holder (email)</p>
           </div>

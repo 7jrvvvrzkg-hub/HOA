@@ -67,7 +67,7 @@ export async function uploadDocument(
     if (emails.length > 0) {
       await sendEmail({
         to: emails,
-        subject: `place holder (document-update subject prefix): ${doc.title}`,
+        subject: `Document Update: ${doc.title}`,
         html: documentUpdateTemplate(doc.title),
       });
     }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import clsx from "clsx";
 
-type Variant = "primary" | "accent" | "outline" | "ghost" | "danger";
+type Variant = "primary" | "accent" | "outline" | "ghost" | "danger" | "ghostInvert" | "outlineInvert";
 type Size = "sm" | "md";
 
 const base =
@@ -13,6 +13,12 @@ const variants: Record<Variant, string> = {
   outline: "border border-primary text-primary hover:bg-primary hover:text-cream focus-visible:ring-primary",
   ghost: "text-ink-soft hover:bg-cream-dark",
   danger: "bg-danger text-cream hover:opacity-90 focus-visible:ring-danger",
+  // For use on dark backgrounds (e.g. the top bar / sidebar) where the
+  // light-background "ghost" and "outline" variants read as low-contrast
+  // grey-on-grey. Kept as separate variants rather than className overrides
+  // so there's no Tailwind class-order specificity fight.
+  ghostInvert: "text-cream hover:bg-cream/15 hover:text-accent focus-visible:ring-cream",
+  outlineInvert: "border border-cream/70 text-cream hover:bg-cream hover:text-primary focus-visible:ring-cream",
 };
 
 const sizes: Record<Size, string> = {

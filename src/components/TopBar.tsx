@@ -7,9 +7,9 @@ import { Menu, X, FileText, LogIn, LogOut, Mail, LayoutDashboard } from "lucide-
 import { ButtonLink, Button } from "@/components/Button";
 
 const navItems = [
-  { href: "#mission", label: "place holder (mission)" },
-  { href: "#announcements", label: "place holder (announcements)" },
-  { href: "#contact", label: "place holder (contact)" },
+  { href: "#mission", label: "Mission" },
+  { href: "#announcements", label: "Announcements" },
+  { href: "#contact", label: "Contact" },
 ];
 
 export default function TopBar() {
@@ -35,26 +35,26 @@ export default function TopBar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <ButtonLink href="/portal/documents" variant="ghost" size="sm" className="text-cream hover:bg-primary-dark">
-            <FileText size={16} /> document access
+          <ButtonLink href="/portal/documents" variant="ghostInvert" size="sm">
+            <FileText size={16} /> Document Access
           </ButtonLink>
           <a href="#contact">
-            <Button variant="ghost" size="sm" className="text-cream hover:bg-primary-dark">
-              <Mail size={16} /> contact us
+            <Button variant="ghostInvert" size="sm">
+              <Mail size={16} /> Contact Us
             </Button>
           </a>
           {session ? (
             <>
-              <ButtonLink href="/portal" variant="outline" size="sm" className="border-cream text-cream hover:bg-cream hover:text-primary">
-                <LayoutDashboard size={16} /> my portal
+              <ButtonLink href="/portal" variant="outlineInvert" size="sm">
+                <LayoutDashboard size={16} /> My Portal
               </ButtonLink>
               <Button variant="accent" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
-                <LogOut size={16} /> sign out
+                <LogOut size={16} /> Sign Out
               </Button>
             </>
           ) : (
             <ButtonLink href="/login" variant="accent" size="sm">
-              <LogIn size={16} /> login
+              <LogIn size={16} /> Login
             </ButtonLink>
           )}
         </div>
@@ -77,23 +77,23 @@ export default function TopBar() {
               </a>
             ))}
             <Link href="/portal/documents" onClick={() => setOpen(false)} className="flex items-center gap-2">
-              <FileText size={16} /> document access
+              <FileText size={16} /> Document Access
             </Link>
             {session ? (
               <>
                 <Link href="/portal" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                  <LayoutDashboard size={16} /> my portal
+                  <LayoutDashboard size={16} /> My Portal
                 </Link>
                 <button
                   className="flex items-center gap-2 text-left"
                   onClick={() => signOut({ callbackUrl: "/" })}
                 >
-                  <LogOut size={16} /> sign out
+                  <LogOut size={16} /> Sign Out
                 </button>
               </>
             ) : (
               <Link href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                <LogIn size={16} /> login
+                <LogIn size={16} /> Login
               </Link>
             )}
           </nav>

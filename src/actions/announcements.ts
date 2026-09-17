@@ -52,7 +52,7 @@ export async function createAnnouncement(
     if (emails.length > 0) {
       await sendEmail({
         to: emails,
-        subject: `place holder (announcement subject prefix): ${announcement.title}`,
+        subject: `New Announcement: ${announcement.title}`,
         html: announcementEmailTemplate(announcement.title, announcement.body),
       });
     }

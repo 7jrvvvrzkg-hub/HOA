@@ -31,29 +31,29 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <h2 className="text-lg font-semibold text-primary">{profile.fullName}</h2>
         <p className="text-sm text-ink-soft">{profile.user.email}</p>
         <p className="mt-1 text-xs uppercase tracking-wide text-ink-soft">
-          place holder (role tags label): {profile.user.roles.join(", ")}
+          Roles: {profile.user.roles.join(", ")}
         </p>
 
         <form action={setAccessLevel} className="mt-3 flex items-center gap-2">
-          <label className="text-sm text-ink-soft">place holder (portal access level label)</label>
+          <label className="text-sm text-ink-soft">Portal Access Level</label>
           <select name="level" defaultValue={profile.portalAccessLevel} className="rounded-md border border-cream-dark px-2 py-1 text-sm">
             <option value="FULL">full</option>
             <option value="STANDARD">standard</option>
             <option value="LIMITED">limited</option>
           </select>
           <Button type="submit" size="sm" variant="outline">
-            place holder (save label)
+            Save
           </Button>
         </form>
       </div>
 
       <div>
         <h3 className="flex items-center gap-2 font-semibold text-ink">
-          <StickyNote size={18} className="text-accent-dark" /> place holder (admin notes heading — only admins see this)
+          <StickyNote size={18} className="text-accent-dark" /> Admin Notes (private)
         </h3>
         <form action={addAdminNote.bind(null, profile.id)} className="mt-3 flex gap-2">
-          <input name="body" placeholder="place holder (add a note placeholder)" className="flex-1 rounded-md border border-cream-dark px-3 py-2 text-sm" />
-          <Button type="submit" size="sm">place holder (add label)</Button>
+          <input name="body" placeholder="Add a note..." className="flex-1 rounded-md border border-cream-dark px-3 py-2 text-sm" />
+          <Button type="submit" size="sm">Add</Button>
         </form>
         <ul className="mt-3 space-y-2">
           {profile.adminNotes.map((n) => (
@@ -69,7 +69,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
       <div>
         <h3 className="flex items-center gap-2 font-semibold text-ink">
-          <Phone size={18} className="text-accent-dark" /> place holder (communication log heading — only admins see this)
+          <Phone size={18} className="text-accent-dark" /> Communication Log (private)
         </h3>
         <form action={addCommunicationLog.bind(null, profile.id)} className="mt-3 flex flex-wrap gap-2">
           <select name="channel" className="rounded-md border border-cream-dark px-2 py-2 text-sm">
@@ -78,8 +78,8 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <option value="in-person">in-person</option>
             <option value="other">other</option>
           </select>
-          <input name="summary" placeholder="place holder (what was discussed placeholder)" className="flex-1 rounded-md border border-cream-dark px-3 py-2 text-sm" />
-          <Button type="submit" size="sm">place holder (log label)</Button>
+          <input name="summary" placeholder="What was discussed..." className="flex-1 rounded-md border border-cream-dark px-3 py-2 text-sm" />
+          <Button type="submit" size="sm">Log</Button>
         </form>
         <ul className="mt-3 space-y-2">
           {profile.communicationLogs.map((l) => (

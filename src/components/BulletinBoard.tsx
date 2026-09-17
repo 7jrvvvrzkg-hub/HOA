@@ -28,13 +28,13 @@ export default async function BulletinBoard() {
         <div className="mb-8 flex items-center gap-3">
           <Pin className="text-cream" />
           <h2 className="text-2xl font-bold text-cream sm:text-3xl">
-            place holder (announcements board heading)
+            Announcements
           </h2>
         </div>
 
         {announcementList.length === 0 ? (
           <p className="rounded-md bg-cream/90 p-6 text-ink-soft">
-            place holder (empty-state copy — no announcements posted yet)
+            No announcements posted yet.
           </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

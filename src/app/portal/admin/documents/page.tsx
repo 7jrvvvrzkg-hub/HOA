@@ -14,22 +14,22 @@ export default async function AdminDocumentsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-primary">place holder (upload document heading)</h2>
+        <h2 className="text-lg font-semibold text-primary">Upload Document</h2>
         <div className="mt-3">
           <UploadDocumentForm />
         </div>
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-primary">place holder (all documents heading)</h2>
+        <h2 className="text-lg font-semibold text-primary">All Documents</h2>
         <div className="mt-3 overflow-x-auto rounded-lg border border-cream-dark bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-cream-dark bg-cream-dark/40 text-xs uppercase text-ink-soft">
               <tr>
-                <th className="px-4 py-3">place holder (title column label)</th>
-                <th className="px-4 py-3">place holder (category column label)</th>
-                <th className="px-4 py-3">place holder (visibility column label)</th>
-                <th className="px-4 py-3">place holder (uploaded by column label)</th>
+                <th className="px-4 py-3">Title</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Visibility</th>
+                <th className="px-4 py-3">Uploaded By</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -43,7 +43,7 @@ export default async function AdminDocumentsPage() {
                   <td className="px-4 py-3 text-right">
                     <form action={deleteDocument.bind(null, d.id)}>
                       <Button type="submit" size="sm" variant="danger">
-                        place holder (delete label)
+                        Delete
                       </Button>
                     </form>
                   </td>

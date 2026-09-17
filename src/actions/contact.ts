@@ -34,7 +34,7 @@ export async function submitContactForm(
   // without an API key configured yet.
   await sendEmail({
     to: email,
-    subject: "place holder (acknowledgement subject line)",
+    subject: "Thanks for reaching out",
     html: contactAcknowledgementTemplate(name),
   });
 
@@ -46,7 +46,7 @@ export async function submitContactForm(
   if (admins.length > 0) {
     await sendEmail({
       to: admins.map((a) => a.email),
-      subject: "place holder (admin alert subject line)",
+      subject: "New contact form submission",
       html: adminLeadAlertTemplate(name, email, message),
     });
   }

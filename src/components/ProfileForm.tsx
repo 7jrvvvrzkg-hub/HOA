@@ -23,7 +23,7 @@ export default function ProfileForm(props: Props) {
   return (
     <form action={formAction} className="mt-6 max-w-xl space-y-5">
       <div>
-        <label className="block text-sm font-medium text-ink">place holder (full name label)</label>
+        <label className="block text-sm font-medium text-ink">Full Name</label>
         <input
           name="fullName"
           defaultValue={props.fullName}
@@ -34,7 +34,7 @@ export default function ProfileForm(props: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-ink">place holder (unit / address line label)</label>
+          <label className="block text-sm font-medium text-ink">Unit</label>
           <input
             name="unit"
             defaultValue={props.unit}
@@ -42,7 +42,7 @@ export default function ProfileForm(props: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-ink">place holder (mailing address label)</label>
+          <label className="block text-sm font-medium text-ink">Mailing Address</label>
           <input
             name="address"
             defaultValue={props.address}
@@ -53,7 +53,7 @@ export default function ProfileForm(props: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-ink">place holder (phone label)</label>
+          <label className="block text-sm font-medium text-ink">Phone</label>
           <input
             name="phone"
             defaultValue={props.phone}
@@ -61,7 +61,7 @@ export default function ProfileForm(props: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-ink">place holder (display email label)</label>
+          <label className="block text-sm font-medium text-ink">Contact Email</label>
           <input
             name="contactEmail"
             type="email"
@@ -73,29 +73,29 @@ export default function ProfileForm(props: Props) {
 
       <fieldset className="rounded-md border border-cream-dark p-4">
         <legend className="px-1 text-sm font-medium text-ink">
-          place holder (directory sharing heading — choose what other residents can see)
+          Directory Sharing — choose what other residents can see
         </legend>
         <div className="mt-2 space-y-2 text-sm">
           <label className="flex items-center gap-2">
             <input type="checkbox" name="shareUnit" defaultChecked={props.shareUnit} />
-            place holder (share unit/address toggle label)
+            Share my unit in the directory
           </label>
           <label className="flex items-center gap-2">
             <input type="checkbox" name="sharePhone" defaultChecked={props.sharePhone} />
-            place holder (share phone toggle label)
+            Share my phone in the directory
           </label>
           <label className="flex items-center gap-2">
             <input type="checkbox" name="shareContactEmail" defaultChecked={props.shareContactEmail} />
-            place holder (share email toggle label)
+            Share my email in the directory
           </label>
         </div>
       </fieldset>
 
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
-      {state.ok && <p className="text-sm text-primary">place holder (profile saved confirmation copy)</p>}
+      {state.ok && <p className="text-sm text-primary">Profile saved.</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "place holder (saving label)" : "place holder (save changes button label)"}
+        {pending ? "Saving..." : "Save Changes"}
       </Button>
     </form>
   );

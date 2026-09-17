@@ -19,11 +19,11 @@ export default function MissionSection() {
         </div>
 
         <div className="rounded-lg border border-cream-dark bg-white/60 p-6">
-          <h3 className="text-lg font-semibold text-primary">place holder (contact details heading)</h3>
+          <h3 className="text-lg font-semibold text-primary">Contact Us</h3>
           <ul className="mt-4 space-y-3 text-sm text-ink-soft">
             <li className="flex items-center gap-3">
               <MapPin size={18} className="text-accent" />
-              place holder (mailing / office address)
+              230 West Tazewell Street, Norfolk, VA
             </li>
             <li className="flex items-center gap-3">
               <Phone size={18} className="text-accent" />
@@ -35,7 +35,7 @@ export default function MissionSection() {
             </li>
           </ul>
           <div className="mt-6 border-t border-cream-dark pt-4 text-sm text-ink-soft">
-            <p className="font-medium text-ink">place holder (office hours heading)</p>
+            <p className="font-medium text-ink">Office Hours</p>
             <p>place holder (office hours, e.g. mon–fri 9am–5pm)</p>
           </div>
         </div>

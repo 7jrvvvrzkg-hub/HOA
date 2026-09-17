@@ -19,9 +19,9 @@ export default async function AdminLeadsPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-primary">place holder (contact form leads heading)</h2>
+      <h2 className="text-lg font-semibold text-primary">Contact Form Leads</h2>
       <p className="mt-1 text-sm text-ink-soft">
-        place holder (leads subheading — every contact-form submission lands here as a simple built-in CRM)
+        Every contact-form submission lands here as a simple built-in CRM.
       </p>
 
       <div className="mt-4 space-y-3">
@@ -47,11 +47,11 @@ export default async function AdminLeadsPage() {
                   <option value="IN_PROGRESS">in progress</option>
                   <option value="RESOLVED">resolved</option>
                 </select>
-                <Button type="submit" size="sm" variant="outline">place holder (update label)</Button>
+                <Button type="submit" size="sm" variant="outline">Update</Button>
               </form>
               <form action={assignLeadToSelf.bind(null, lead.id)}>
                 <Button type="submit" size="sm" variant="ghost">
-                  {lead.assignedTo ? `place holder (assigned to label): ${lead.assignedTo.email}` : "place holder (assign to me label)"}
+                  {lead.assignedTo ? `Assigned to: ${lead.assignedTo.email}` : "Assign to Me"}
                 </Button>
               </form>
               <span className="text-xs text-ink-soft">
@@ -62,7 +62,7 @@ export default async function AdminLeadsPage() {
         ))}
         {leadList.length === 0 && (
           <p className="rounded-md border border-dashed border-cream-dark p-6 text-ink-soft">
-            place holder (empty-state copy — no leads yet)
+            No leads yet.
           </p>
         )}
       </div>

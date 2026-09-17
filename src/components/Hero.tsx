@@ -15,10 +15,10 @@ export default function Hero() {
         </p>
         <div className="flex flex-wrap gap-3">
           <ButtonLink href="/login" variant="accent">
-            place holder (primary CTA — e.g. resident login)
+            Resident Login
           </ButtonLink>
           <ButtonLink href="#contact" variant="outline" className="border-cream text-cream hover:bg-cream hover:text-primary">
-            place holder (secondary CTA — e.g. contact us)
+            Contact Us
           </ButtonLink>
         </div>
       </div>

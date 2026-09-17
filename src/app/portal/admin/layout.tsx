@@ -4,11 +4,11 @@ import { getSession } from "@/lib/auth";
 import { Users, FileText, Megaphone, Inbox, ShieldCheck } from "lucide-react";
 
 const tabs = [
-  { href: "/portal/admin", label: "place holder (overview tab label)", icon: ShieldCheck },
-  { href: "/portal/admin/users", label: "place holder (users tab label)", icon: Users },
-  { href: "/portal/admin/documents", label: "place holder (documents tab label)", icon: FileText },
-  { href: "/portal/admin/announcements", label: "place holder (announcements tab label)", icon: Megaphone },
-  { href: "/portal/admin/leads", label: "place holder (leads/CRM tab label)", icon: Inbox },
+  { href: "/portal/admin", label: "Overview", icon: ShieldCheck },
+  { href: "/portal/admin/users", label: "Users", icon: Users },
+  { href: "/portal/admin/documents", label: "Documents", icon: FileText },
+  { href: "/portal/admin/announcements", label: "Announcements", icon: Megaphone },
+  { href: "/portal/admin/leads", label: "Leads", icon: Inbox },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div>
       <div className="flex items-center gap-2 border-b border-cream-dark pb-4">
         <ShieldCheck className="text-accent-dark" size={22} />
-        <h1 className="text-xl font-bold text-primary">place holder (admin console heading)</h1>
+        <h1 className="text-xl font-bold text-primary">Admin Console</h1>
       </div>
       <nav className="mt-4 flex flex-wrap gap-2">
         {tabs.map((t) => (

@@ -13,10 +13,10 @@ export default async function AdminOverviewPage() {
   ]);
 
   const cards = [
-    { href: "/portal/admin/users", label: "place holder (total accounts label)", value: userCount, icon: Users },
-    { href: "/portal/admin/documents", label: "place holder (documents on file label)", value: documentCount, icon: FileText },
-    { href: "/portal/admin/announcements", label: "place holder (active announcements label)", value: announcementCount, icon: Megaphone },
-    { href: "/portal/admin/leads", label: "place holder (open leads label)", value: openLeadCount, icon: Inbox },
+    { href: "/portal/admin/users", label: "Total Accounts", value: userCount, icon: Users },
+    { href: "/portal/admin/documents", label: "Documents on File", value: documentCount, icon: FileText },
+    { href: "/portal/admin/announcements", label: "Active Announcements", value: announcementCount, icon: Megaphone },
+    { href: "/portal/admin/leads", label: "Open Leads", value: openLeadCount, icon: Inbox },
   ];
 
   return (

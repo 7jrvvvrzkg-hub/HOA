@@ -19,11 +19,11 @@ export default async function PortalLayout({ children }: { children: React.React
   const isAdmin = roles.includes("ADMIN");
 
   const navItems = [
-    { href: "/portal", label: "place holder (dashboard nav label)", icon: LayoutDashboard },
-    { href: "/portal/documents", label: "place holder (documents nav label)", icon: FileText },
-    { href: "/portal/directory", label: "place holder (directory nav label)", icon: Users },
-    { href: "/portal/announcements", label: "place holder (announcements nav label)", icon: Megaphone },
-    { href: "/portal/profile", label: "place holder (profile nav label)", icon: UserCircle },
+    { href: "/portal", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/portal/documents", label: "Documents", icon: FileText },
+    { href: "/portal/directory", label: "Directory", icon: Users },
+    { href: "/portal/announcements", label: "Announcements", icon: Megaphone },
+    { href: "/portal/profile", label: "Profile", icon: UserCircle },
   ];
 
   return (
@@ -34,7 +34,7 @@ export default async function PortalLayout({ children }: { children: React.React
             <Link href="/" className="text-lg font-semibold">
               place holder (hoa name)
             </Link>
-            <p className="mt-1 text-xs text-cream/70">place holder (portal subtitle)</p>
+            <p className="mt-1 text-xs text-cream/70">Resident &amp; Admin Portal</p>
           </div>
           <nav className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 text-sm lg:flex-col lg:overflow-visible">
             {navItems.map((item) => (
@@ -53,7 +53,7 @@ export default async function PortalLayout({ children }: { children: React.React
                 className="mt-2 flex items-center gap-3 whitespace-nowrap rounded-md bg-accent px-3 py-2 font-medium text-ink hover:bg-accent-dark lg:mt-4"
               >
                 <ShieldCheck size={18} />
-                place holder (admin console nav label)
+                Admin Console
               </Link>
             )}
           </nav>

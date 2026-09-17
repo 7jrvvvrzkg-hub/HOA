@@ -15,9 +15,9 @@ export default async function AdminAnnouncementsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-primary">place holder (new announcement heading)</h2>
+        <h2 className="text-lg font-semibold text-primary">New Announcement</h2>
         <p className="mt-1 text-sm text-ink-soft">
-          place holder (bulletin board subheading — this feeds the pinned-note board on the homepage)
+          This feeds the pinned-note board on the homepage.
         </p>
         <div className="mt-3">
           <AnnouncementForm />
@@ -25,7 +25,7 @@ export default async function AdminAnnouncementsPage() {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-primary">place holder (manage announcements heading)</h2>
+        <h2 className="text-lg font-semibold text-primary">Manage Announcements</h2>
         <div className="mt-3 space-y-4">
           {announcementList.map((a) => (
             <details key={a.id} className="rounded-lg border border-cream-dark bg-white">
@@ -43,7 +43,7 @@ export default async function AdminAnnouncementsPage() {
                     <Button type="submit" size="sm" variant="ghost"><ChevronDown size={14} /></Button>
                   </form>
                   <form action={deleteAnnouncement.bind(null, a.id)}>
-                    <Button type="submit" size="sm" variant="danger">place holder (delete label)</Button>
+                    <Button type="submit" size="sm" variant="danger">Delete</Button>
                   </form>
                 </span>
               </summary>

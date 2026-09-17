@@ -18,11 +18,10 @@ export default async function DirectoryPage() {
     <div>
       <div className="flex items-center gap-2">
         <Users className="text-primary" size={22} />
-        <h1 className="text-2xl font-bold text-primary">place holder (resident directory heading)</h1>
+        <h1 className="text-2xl font-bold text-primary">Resident Directory</h1>
       </div>
       <p className="mt-1 text-ink-soft">
-        place holder (directory subheading — residents only see the optional details each
-        person has chosen to share)
+        Residents only see the optional details each person has chosen to share.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -47,7 +46,7 @@ export default async function DirectoryPage() {
               )}
               {!p.shareUnit && !p.sharePhone && !p.shareContactEmail && !isAdmin && (
                 <p className="italic text-ink-soft/70">
-                  place holder (no shared details copy — this resident hasn&apos;t shared any optional info)
+                  This resident hasn&apos;t shared any optional info.
                 </p>
               )}
             </div>

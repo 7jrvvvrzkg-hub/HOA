@@ -14,9 +14,9 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-primary">place holder (create profile heading)</h2>
+        <h2 className="text-lg font-semibold text-primary">Create Profile</h2>
         <p className="mt-1 text-sm text-ink-soft">
-          place holder (create profile subheading — give the person a temporary password, then have them change it after they sign in)
+          Give the person a temporary password, then have them change it after they sign in.
         </p>
         <div className="mt-3">
           <CreateUserForm />
@@ -24,17 +24,17 @@ export default async function AdminUsersPage() {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-primary">place holder (all accounts heading)</h2>
+        <h2 className="text-lg font-semibold text-primary">All Accounts</h2>
         <p className="mt-1 text-sm text-ink-soft">
-          place holder (roles subheading — only admins can see or edit these role tags)
+          Only admins can see or edit these role tags.
         </p>
         <div className="mt-3 overflow-x-auto rounded-lg border border-cream-dark bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-cream-dark bg-cream-dark/40 text-xs uppercase text-ink-soft">
               <tr>
-                <th className="px-4 py-3">place holder (name column label)</th>
-                <th className="px-4 py-3">place holder (email column label)</th>
-                <th className="px-4 py-3">place holder (roles column label)</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Roles</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -51,7 +51,7 @@ export default async function AdminUsersPage() {
                   <td className="px-4 py-3 text-right">
                     {u.residentProfile && (
                       <Link href={`/portal/admin/users/${u.residentProfile.id}`} className="text-primary hover:underline">
-                        place holder (view details link label)
+                        View →
                       </Link>
                     )}
                   </td>

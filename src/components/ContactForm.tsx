@@ -12,9 +12,9 @@ export default function ContactForm() {
   if (state.ok) {
     return (
       <div id="contact" className="mx-auto max-w-2xl rounded-lg border border-primary/20 bg-white/70 p-8 text-center">
-        <h3 className="text-xl font-semibold text-primary">place holder (thank-you heading)</h3>
+        <h3 className="text-xl font-semibold text-primary">Thank you!</h3>
         <p className="mt-2 text-ink-soft">
-          place holder (thank-you copy — we received your message and will get back to you soon)
+          We received your message and will get back to you soon.
         </p>
       </div>
     );
@@ -25,7 +25,7 @@ export default function ContactForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-ink" htmlFor="name">
-            place holder (full name label)
+            Full Name
           </label>
           <input
             id="name"
@@ -36,7 +36,7 @@ export default function ContactForm() {
         </div>
         <div>
           <label className="block text-sm font-medium text-ink" htmlFor="email">
-            place holder (email label)
+            Email
           </label>
           <input
             id="email"
@@ -49,7 +49,7 @@ export default function ContactForm() {
       </div>
       <div>
         <label className="block text-sm font-medium text-ink" htmlFor="phone">
-          place holder (phone label, optional)
+          Phone (optional)
         </label>
         <input
           id="phone"
@@ -59,7 +59,7 @@ export default function ContactForm() {
       </div>
       <div>
         <label className="block text-sm font-medium text-ink" htmlFor="message">
-          place holder (message label)
+          Message
         </label>
         <textarea
           id="message"
@@ -73,7 +73,7 @@ export default function ContactForm() {
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "place holder (sending label)" : "place holder (submit button label)"}
+        {pending ? "Sending..." : "Send Message"}
       </Button>
     </form>
   );

@@ -29,14 +29,14 @@ export default async function AnnouncementsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Megaphone className="text-primary" size={22} />
-          <h1 className="text-2xl font-bold text-primary">place holder (announcements heading)</h1>
+          <h1 className="text-2xl font-bold text-primary">Announcements</h1>
         </div>
         {isAdmin && (
           <Link
             href="/portal/admin/announcements"
             className="flex items-center gap-1 rounded-md border border-primary px-3 py-1.5 text-sm text-primary hover:bg-primary hover:text-cream"
           >
-            <Pencil size={14} /> place holder (manage announcements link label)
+            <Pencil size={14} /> Manage Announcements
           </Link>
         )}
       </div>
