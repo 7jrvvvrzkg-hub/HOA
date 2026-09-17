@@ -1,0 +1,62 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { residentProfiles } from "@/db/schema";
+import { getSession } from "@/lib/auth";
+import { profileUpdateSchema } from "@/lib/validation";
+
+export type ProfileFormState = { ok: boolean; error?: string };
+
+/** A resident can only ever edit their own row — the session's user id is
+ * the sole key used to find the profile to update, never a client-supplied id. */
+export async function updateOwnProfile(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await getSession();
+  if (!session?.user?.id) return { ok: false, error: "not signed in" };
+
+  const parsed = profileUpdateSchema.safeParse({
+    fullName: formData.get("fullName"),
+    unit: formData.get("unit") ?? "",
+    address: formData.get("address") ?? "",
+    phone: formData.get("phone") ?? "",
+    contactEmail: formData.get("contactEmail") ?? "",
+    shareUnit: formData.get("shareUnit") === "on",
+    sharePhone: formData.get("sharePhone") === "on",
+    shareContactEmail: formData.get("shareContactEmail") === "on",
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid submission" };
+  }
+
+  const profile = await db.query.residentProfiles.findFirst({
+    where: eq(residentProfiles.userId, session.user.id),
+  });
+  if (!profile) return { ok: false, error: "no resident profile on this account" };
+
+  const { fullName, unit, address, phone, contactEmail, shareUnit, sharePhone, shareContactEmail } =
+    parsed.data;
+
+  await db
+    .update(residentProfiles)
+    .set({
+      fullName,
+      unit: unit || null,
+      address: address || null,
+      phone: phone || null,
+      contactEmail: contactEmail || null,
+      shareUnit,
+      sharePhone,
+      shareContactEmail,
+      updatedAt: new Date(),
+    })
+    .where(eq(residentProfiles.id, profile.id));
+
+  revalidatePath("/portal/profile");
+  revalidatePath("/portal/directory");
+  return { ok: true };
+}
