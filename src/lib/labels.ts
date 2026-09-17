@@ -23,6 +23,17 @@ export const docVisibilityLabels: Record<DocVisibility, string> = {
   OWNERS_ONLY: "Owners Only",
   RENTERS_ONLY: "Renters Only",
   ADMIN_ONLY: "Admin Only",
+  PERSONAL: "Personal (Specific Resident)",
+};
+
+// Announcements reuse the same enum for their "audience" column but have no
+// concept of a single assigned resident — this is docVisibilityLabels minus
+// the one option that only makes sense for a document.
+export const announcementAudienceLabels: Record<Exclude<DocVisibility, "PERSONAL">, string> = {
+  ALL_RESIDENTS: "All Residents",
+  OWNERS_ONLY: "Owners Only",
+  RENTERS_ONLY: "Renters Only",
+  ADMIN_ONLY: "Admin Only",
 };
 
 export const announcementPriorityLabels: Record<AnnouncementPriority, string> = {

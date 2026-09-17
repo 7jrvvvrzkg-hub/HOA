@@ -1,7 +1,7 @@
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
-import { updateLeadStatus, assignLeadToSelf } from "@/actions/leads";
+import { updateLeadStatus, assignLeadToSelf, deleteLead } from "@/actions/leads";
 import { Button } from "@/components/Button";
 import { leadStatusLabels } from "@/lib/labels";
 import clsx from "clsx";
@@ -58,6 +58,9 @@ export default async function AdminLeadsPage() {
               <span className="text-xs text-ink-soft">
                 {lead.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
               </span>
+              <form action={deleteLead.bind(null, lead.id)} className="ml-auto">
+                <Button type="submit" size="sm" variant="danger">Delete</Button>
+              </form>
             </div>
           </div>
         ))}

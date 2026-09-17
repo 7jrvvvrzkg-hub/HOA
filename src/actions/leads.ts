@@ -18,3 +18,9 @@ export async function assignLeadToSelf(id: string) {
   await db.update(leads).set({ assignedToId: session.user.id }).where(eq(leads.id, id));
   revalidatePath("/portal/admin/leads");
 }
+
+export async function deleteLead(id: string) {
+  await requireAdmin();
+  await db.delete(leads).where(eq(leads.id, id));
+  revalidatePath("/portal/admin/leads");
+}

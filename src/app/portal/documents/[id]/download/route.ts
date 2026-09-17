@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { getSession } from "@/lib/auth";
+import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { documents } from "@/db/schema";
-import { canView } from "@/lib/access";
+import { canViewDocument } from "@/lib/access";
 
 export async function GET(
   _request: Request,
@@ -20,8 +20,10 @@ export async function GET(
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  const roles = session.user.roles ?? [];
-  if (!canView(roles, doc.visibility)) {
+  // Fresh from the database, not the session's cached roles — same reasoning
+  // as every other access check in this app (see src/lib/auth.ts).
+  const roles = await getFreshRoles(session.user.id);
+  if (!canViewDocument(roles, session.user.id, doc)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 

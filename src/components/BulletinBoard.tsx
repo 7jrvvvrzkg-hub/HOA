@@ -7,7 +7,7 @@ import clsx from "clsx";
 const priorityStyle: Record<string, { pin: string; ring: string; tag: string }> = {
   URGENT: { pin: "text-danger", ring: "ring-danger/40", tag: "bg-danger text-cream" },
   IMPORTANT: { pin: "text-warning", ring: "ring-warning/40", tag: "bg-warning text-ink" },
-  NORMAL: { pin: "text-primary", ring: "ring-primary/20", tag: "bg-primary/10 text-primary" },
+  NORMAL: { pin: "text-primary", ring: "ring-primary/20", tag: "bg-primary text-cream" },
 };
 
 // slight alternating tilt so the board reads as a physical corkboard

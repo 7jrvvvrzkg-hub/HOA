@@ -23,6 +23,13 @@ export const docVisibilityEnum = pgEnum("doc_visibility", [
   "OWNERS_ONLY",
   "RENTERS_ONLY",
   "ADMIN_ONLY",
+  // Only meaningful for `documents.visibility` (paired with `assignedToId`
+  // below) — a document for one specific resident, like an individual lease
+  // or contract, rather than everyone with a given role. Announcements share
+  // this same enum for their `audience` column but never use this value; the
+  // announcement form and its validation schema both deliberately leave it
+  // out of what they accept.
+  "PERSONAL",
 ]);
 export const docCategoryEnum = pgEnum("doc_category", [
   "BYLAWS",
@@ -106,6 +113,11 @@ export const documents = pgTable("documents", {
   fileData: bytea("file_data").notNull(),
   fileSize: integer("file_size").notNull(),
   uploadedById: text("uploaded_by_id").notNull().references(() => users.id),
+  // Only set when visibility is "PERSONAL" — the one resident (beyond
+  // admins) who can see this document, e.g. an individual lease or contract
+  // rather than a building-wide one. Cascades so a deleted account doesn't
+  // leave an orphaned personal document behind.
+  assignedToId: text("assigned_to_id").references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -165,7 +177,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [adminAccounts.userId],
   }),
-  uploadedDocuments: many(documents),
+  uploadedDocuments: many(documents, { relationName: "documentUploadedBy" }),
+  assignedDocuments: many(documents, { relationName: "documentAssignedTo" }),
   announcementsWritten: many(announcements),
   adminNotesWritten: many(adminNotes),
   communicationLogs: many(communicationLogs),
@@ -182,7 +195,16 @@ export const adminAccountsRelations = relations(adminAccounts, ({ one }) => ({
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({
-  uploadedBy: one(users, { fields: [documents.uploadedById], references: [users.id] }),
+  uploadedBy: one(users, {
+    fields: [documents.uploadedById],
+    references: [users.id],
+    relationName: "documentUploadedBy",
+  }),
+  assignedTo: one(users, {
+    fields: [documents.assignedToId],
+    references: [users.id],
+    relationName: "documentAssignedTo",
+  }),
 }));
 
 export const announcementsRelations = relations(announcements, ({ one }) => ({
@@ -205,7 +227,7 @@ export const communicationLogsRelations = relations(communicationLogs, ({ one })
 
 export type RoleTag = "ADMIN" | "OWNER" | "RENTER";
 export type PortalAccessLevel = "FULL" | "STANDARD" | "LIMITED";
-export type DocVisibility = "ALL_RESIDENTS" | "OWNERS_ONLY" | "RENTERS_ONLY" | "ADMIN_ONLY";
+export type DocVisibility = "ALL_RESIDENTS" | "OWNERS_ONLY" | "RENTERS_ONLY" | "ADMIN_ONLY" | "PERSONAL";
 export type DocCategory = "BYLAWS" | "MEETING_MINUTES" | "FORMS" | "FINANCIAL" | "OTHER";
 export type AnnouncementPriority = "NORMAL" | "IMPORTANT" | "URGENT";
 export type LeadStatus = "NEW" | "IN_PROGRESS" | "RESOLVED";

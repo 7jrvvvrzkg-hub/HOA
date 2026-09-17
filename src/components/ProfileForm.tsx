@@ -1,8 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { updateOwnProfile, type ProfileFormState } from "@/actions/profile";
 import { Button } from "@/components/Button";
+import { compressImageIfNeeded } from "@/lib/compressImage";
+
+const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
 
 type Props = {
   profileId: string;
@@ -21,10 +24,41 @@ const initialState: ProfileFormState = { ok: false };
 
 export default function ProfileForm(props: Props) {
   const [state, formAction, pending] = useActionState(updateOwnProfile, initialState);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [processingAvatar, setProcessingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleAvatarChange() {
+    const input = avatarInputRef.current;
+    const file = input?.files?.[0];
+    setAvatarError(null);
+    if (!input || !file) return;
+
+    setProcessingAvatar(true);
+    // A phone camera photo can easily be 15-25MB at full resolution — way
+    // over what a small profile picture needs, and over Vercel's fixed
+    // 4.5MB request-body ceiling too. Shrink it in the browser first, on
+    // both mobile and desktop, so the upload actually goes through.
+    const processed = await compressImageIfNeeded(file);
+    setProcessingAvatar(false);
+
+    if (processed.size > MAX_AVATAR_BYTES) {
+      setAvatarError(
+        `That photo is ${(processed.size / (1024 * 1024)).toFixed(1)}MB even after shrinking — try a different one.`
+      );
+      return;
+    }
+
+    if (processed !== file) {
+      const dt = new DataTransfer();
+      dt.items.add(processed);
+      input.files = dt.files;
+    }
+  }
 
   return (
     <form action={formAction} className="mt-6 max-w-xl space-y-5">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         {props.hasAvatar ? (
           // eslint-disable-next-line @next/next/no-img-element -- served from our own DB-backed route, not an optimizable static asset
           <img
@@ -39,7 +73,16 @@ export default function ProfileForm(props: Props) {
         )}
         <div>
           <label className="block text-sm font-medium text-ink">Profile Picture</label>
-          <input name="avatar" type="file" accept="image/*" className="mt-1 text-sm" />
+          <input
+            ref={avatarInputRef}
+            name="avatar"
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="mt-1 text-sm"
+          />
+          {processingAvatar && <p className="mt-1 text-xs text-ink-soft">Preparing photo…</p>}
+          {avatarError && <p className="mt-1 text-xs text-danger">{avatarError}</p>}
         </div>
       </div>
 
@@ -115,7 +158,7 @@ export default function ProfileForm(props: Props) {
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
       {state.ok && <p className="text-sm text-primary">Profile saved.</p>}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending || processingAvatar || !!avatarError}>
         {pending ? "Saving..." : "Save Changes"}
       </Button>
     </form>

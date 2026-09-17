@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { createAnnouncement, updateAnnouncement, type AnnouncementFormState } from "@/actions/announcements";
 import { Button } from "@/components/Button";
-import { announcementPriorityLabels, docVisibilityLabels } from "@/lib/labels";
+import { announcementPriorityLabels, announcementAudienceLabels } from "@/lib/labels";
+import type { DocVisibility } from "@/db/schema";
 
 const initialState: AnnouncementFormState = { ok: false };
 
@@ -14,7 +15,12 @@ type Existing = {
   priority: "NORMAL" | "IMPORTANT" | "URGENT";
   pinned: boolean;
   active: boolean;
-  audience: "ALL_RESIDENTS" | "OWNERS_ONLY" | "RENTERS_ONLY" | "ADMIN_ONLY";
+  // Typed as the full DocVisibility union since that's what the `announcements`
+  // table's `audience` column shares with `documents.visibility` — "PERSONAL"
+  // is simply never one of the options rendered below (see
+  // announcementAudienceLabels), so an existing announcement can never
+  // actually carry it in practice.
+  audience: DocVisibility;
 };
 
 export default function AnnouncementForm({ existing }: { existing?: Existing }) {
@@ -42,7 +48,7 @@ export default function AnnouncementForm({ existing }: { existing?: Existing }) 
       <div>
         <label className="block text-sm font-medium text-ink">Audience</label>
         <select name="audience" defaultValue={existing?.audience ?? "ALL_RESIDENTS"} className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-          {Object.entries(docVisibilityLabels).map(([value, label]) => (
+          {Object.entries(announcementAudienceLabels).map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
         </select>

@@ -11,7 +11,7 @@ import clsx from "clsx";
 const priorityTag: Record<string, string> = {
   URGENT: "bg-danger text-cream",
   IMPORTANT: "bg-warning text-ink",
-  NORMAL: "bg-primary/10 text-primary",
+  NORMAL: "bg-primary text-cream",
 };
 
 export default async function AnnouncementsPage() {
