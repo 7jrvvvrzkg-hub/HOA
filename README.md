@@ -1,139 +1,131 @@
-# place holder (hoa name) — website + resident portal
+# Embellish Antiques
 
-A one-page public marketing site plus a secured, role-based resident/admin
-portal, built with Next.js (App Router), Drizzle ORM + Postgres, and
-NextAuth. Every real word of copy is a `place holder (what goes here)`
-marker on purpose — no AI-written copy — and there are no images, so you
-can drop in real photography, logos, and text whenever it's ready.
+A full rebuild of embellishantiques.com — custom-coded (Next.js + Supabase +
+Stripe), off Wix. Built by [Bownode LLC](https://bownode.com).
 
-This was verified end-to-end before delivery: real build, real local
-Postgres database, real login as each role, real writes (contact form →
-lead, creating an announcement, editing a profile, removing a role tag) all
-confirmed working against an actual database, not just "should work."
+Everything in this repo **runs right now** against a small mock/ported data
+layer, with no real credentials — `npm run dev` and click through the whole
+site and admin panel. Nothing is fake or stubbed out as "coming soon" UI;
+every feature is fully wired, it's just pointed at demo data until you plug
+in real Stripe/Supabase/Resend accounts (see **Going live** below).
 
-## What's here
+## What's built
 
-- **Public homepage** (`/`) — top bar (logo, login, contact us, document
-  access), hero, a cork-board-style announcements section that's fully
-  admin-editable, mission/contact info, and a contact form.
-- **Resident/admin portal** (`/portal/**`) — behind login:
-  - dashboard, document repository (role-filtered), resident directory
-    (opt-in fields only), self-service profile editor, full announcements
-    list.
-  - `/portal/admin/**` (admins only) — manage user accounts and role tags,
-    upload/delete documents, create/edit/pin/reorder announcements, and a
-    simple built-in CRM for contact-form leads with per-profile private
-    admin notes + communication logs.
-- **Auth** — email + password login (NextAuth credentials provider), roles
-  stored per-account (`ADMIN`, `OWNER`, `RENTER` — a person can hold more
-  than one), route-level gating in `src/proxy.ts` plus a second check on
-  every admin page/action (defense in depth).
-- **Email automation** — `src/lib/email.ts` sends through Resend's API.
-  Until you add an API key, it just logs what it would have sent to the
-  console, so everything else works before you set up email.
-- **Database** — Drizzle ORM against Postgres. Documents are stored
-  directly in the database (up to 8MB per file) so a test deploy needs
-  nothing beyond one connection string — see "going further" below before
-  using this for large files in production.
+- Full storefront: hero, category shop pages, New Arrivals, Sold Archive,
+  product pages with a size-reference tool and "notify me of similar"
+  waitlist, cart, Stripe Checkout
+- Depop-style animated search bar, a click-to-open Shop dropdown (not
+  hover), and an always-visible contact bar up top with phone/appointment
+  info
+- Likes with a dedicated `/likes` page (persisted in localStorage), a live
+  "most-loved this week" badge, hover quick-view with a first-image
+  preview, add-to-bag "shower" animation, and a smooth slide-in cart drawer
+- The animated music-staff divider — a rotated staff with a shimmying
+  treble clef; click it to start a real looping MP3 track with notes that
+  carousel down the (sideways) staff line, click again (or reload) to stop
+- A playable, pixel-art Space Invaders game on the 404 page (keyboard +
+  touch controls)
+- Owner-only admin panel: dashboard, item CRUD (including image upload/
+  reorder that works right away in demo mode) with larger touch targets on
+  mobile, analytics (a category-share donut chart plus top categories/
+  items, likes, views), and a newsletter composer that generates
+  email-safe HTML and sends to subscribers with a working unsubscribe link
+- Cart-abandonment emails via a Stripe webhook
+- All of the current embellishantiques.com catalog (names/prices/categories)
+  ported into `src/lib/data/ported-listings.ts`
+
+## What still needs the owner
+
+- **Photos.** Wix renders product images with client-side JS, so a static
+  scrape never saw real `<img>` URLs — only names/prices/categories came
+  across cleanly. Re-upload originals through `/admin/items` once Supabase
+  storage is connected (this is also just better than rehosting Wix's
+  compressed copies).
+- **Long-form descriptions, era/materials/dimensions/condition** — the
+  ported listings have placeholder description text (clearly marked in the
+  code) standing in for his real copy.
+- **Logo.** `src/components/logo.tsx` is a plain circle placeholder — swap
+  it for the real mark once he has one; the favicon, admin header, and
+  email templates all pull from it automatically.
+- **About page copy, shipping/returns policy text** — both pages are
+  clearly marked as placeholder in their source.
+- **Music divider note timing.** The track in `/public/music/track.mp3`
+  plays with a fixed, best-guess note carousel (`NOTES` array in
+  `src/components/music-staff-divider.tsx`). Once you generate precise cue
+  points from a music-note generator, swap that array's `left`/`duration`/
+  `delay` values to match the track exactly. `/public/music/note.png` and
+  `clef.png` are already cropped/transparent — add more note variants the
+  same way (chroma-key to transparent, auto-crop) if you want more than
+  one note shape repeating.
 
 ## Tech stack
 
-Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS 4
-· Drizzle ORM · `postgres` (postgres.js) · NextAuth 4 · Zod · lucide-react
+Next.js 16 (App Router, TypeScript, Tailwind v4) · Supabase (Postgres, Auth,
+Storage) · Stripe Checkout · Resend (transactional + newsletter email) ·
+Zustand (cart state) · deployed via GitHub → Vercel, matching the same
+pattern as the HOA project.
 
-## Getting it running
+Fonts (Fraunces + Inter) are self-hosted via `@fontsource-variable` rather
+than `next/font/google` — one less runtime dependency on Google's CDN.
 
-### 1. Push this to GitHub
+## Going live
 
-You mentioned you're doing this yourself — create a new repo and push this
-folder to it (minus `node_modules`, which your own `npm install` will
-recreate).
+Everything below is optional to explore the site/admin panel locally, but
+required before real customers can buy things or a newsletter can send.
 
-### 2. Get a free Postgres database
+### 1. Supabase
 
-Any of these work — Drizzle just needs a standard connection string:
+1. Create a project at [supabase.com](https://supabase.com).
+2. In the SQL editor, run `supabase/migrations/0001_init.sql`, then
+   `supabase/seed.sql` (regenerate the seed file any time with
+   `npx tsx scripts/generate-seed-sql.ts > supabase/seed.sql`).
+3. Create a public storage bucket named `product-images` (Storage → New
+   bucket → Public).
+4. Project Settings → API: copy the URL, anon key, and service role key
+   into `.env.local` (copy `.env.local.example` first).
+5. Create the owner's login: Authentication → Users → Add user, using the
+   email from `ADMIN_OWNER_EMAIL`. That's the account that signs in at
+   `/admin/login`.
 
-- **Supabase** (supabase.com) — free tier, easiest to also add file
-  storage later. After creating a project, go to Project Settings →
-  Database → Connection string (use the "Transaction" pooler one).
-- **Neon** (neon.tech) — free tier, serverless Postgres, very fast to spin
-  up.
+### 2. Stripe
 
-Copy the connection string — you'll need it for `DATABASE_URL`.
+1. Developers → API keys → copy the (test, then later live) secret and
+   publishable keys into `.env.local`.
+2. Developers → Webhooks → add an endpoint at
+   `https://yourdomain.com/api/stripe/webhook`, subscribed to
+   `checkout.session.completed` and `checkout.session.expired` (the second
+   one is what triggers the cart-abandonment email). Copy the signing
+   secret into `STRIPE_WEBHOOK_SECRET`.
+3. Switch to live keys once you're ready to accept real payments.
 
-### 3. Set environment variables
+### 3. Resend (cart-abandonment + newsletter emails)
 
-Copy `.env.example` to `.env.local` for local testing, and add the same
-keys in Vercel under **Project → Settings → Environment Variables**:
+1. Create a Resend account, verify the `embellishantiques.com` sending
+   domain (adds SPF/DKIM/DMARC records — whoever controls the domain's DNS
+   needs to add these, or email deliverability suffers badly).
+2. Copy the API key into `.env.local`.
+3. Free tier covers 3,000 emails/month (100/day cap); the $20/mo Pro tier
+   removes the daily cap once the list grows past a couple hundred people.
 
-| Key | Required? | What it's for |
-| --- | --- | --- |
-| `DATABASE_URL` | yes | the Postgres connection string from step 2 |
-| `NEXTAUTH_SECRET` | yes | session encryption — generate with `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | production only | Vercel sets this automatically; only needed for local dev if things act up |
-| `RESEND_API_KEY` | no | get one free at resend.com once you want real emails sending |
-| `EMAIL_FROM` | no | e.g. `place holder (hoa name) <noreply@yourdomain.com>` |
+### 4. Deploy
 
-**I never need to see any of these values** — you add them directly in
-Vercel and in your own `.env.local`.
+Push to GitHub, import into Vercel, add all the `.env.local` variables as
+Vercel environment variables, deploy. Point the `embellishantiques.com`
+domain at Vercel once you're ready to cut over from Wix.
 
-### 4. Install, push the schema, and seed test data
+## Local development
 
 ```bash
 npm install
-npm run db:push     # creates all the tables in your database
-npm run db:seed      # creates the 10 test profiles — see CREDENTIALS.md
-npm run dev           # http://localhost:3000
+cp .env.local.example .env.local   # demo mode works with no changes
+npm run dev
 ```
 
-### 5. Deploy to Vercel
-
-Import the GitHub repo in Vercel, add the environment variables from step
-3, and deploy. You'll get your `something.vercel.app` URL automatically.
-After the first deploy, run `npm run db:seed` once from your own machine
-(pointed at the production `DATABASE_URL`) to create the test accounts
-there too.
-
-## Test logins
-
-See **CREDENTIALS.md** for the full list of 10 seeded accounts. Quick
-version: `admin1@hoa.test` / `Admin123!`, `owner1@hoa.test` / `Owner123!`,
-`renter1@hoa.test` / `Renter123!`.
-
-## Notes on the choices I made without asking
-
-- **"Two databases"** (resident + admin) are two tables in one Postgres
-  database, linked by a shared login record — that's the standard way to
-  do this in a small app, and it's what lets one person hold both an admin
-  account and a resident profile at once (see `admin2@hoa.test` in the
-  seed data, who is both).
-- **Documents live in the database** (not a separate file-storage service)
-  so this deploys with nothing beyond the one Postgres connection string.
-  8MB/file limit for now. Before going live with large scanned PDFs,
-  swap `src/actions/documents.ts` to upload to Supabase Storage or Vercel
-  Blob instead and store just the URL — I can do this for you when you're
-  ready.
-- **Contact-form "CRM"** is the simple built-in one you asked for — leads
-  land in `/portal/admin/leads` with status + assignment, no external
-  service needed.
-- **Mobile** = fully responsive design (the top bar collapses to a
-  hamburger menu, all portal pages reflow), not a separate app.
-- **Color palette** — deep green + warm gold, defined once as CSS
-  variables in `src/app/globals.css`. Change the values there and the
-  whole site rebrands.
-- Announcements are a **cork-board** style section, per your pick — pinned
-  ones show a pin badge, priority sets the pin/accent color, and admins
-  fully control content/pinning/order/audience from
-  `/portal/admin/announcements`.
-
-## Going further (not needed for testing, but worth knowing)
-
-- Swap document storage to Supabase Storage / Vercel Blob before real
-  files get large (see above).
-- Add a "change your password" flow for residents — right now an admin
-  resets passwords by recreating the account; a proper reset flow is a
-  reasonable next step.
-- Add real Resend templates (the current ones are functional placeholders
-  with `place holder (...)` copy, matching the rest of the site).
-- Consider moving from NextAuth v4 to a newer major version at some point;
-  v4 is stable and fully supported, this just isn't the newest option.
+Owner admin panel in demo mode (no Supabase yet): visit `/admin/login`,
+password is `ADMIN_DEMO_PASSWORD` from `.env.local` (default
+`embellish-demo`) — change it. Demo mode is a real working preview, not
+read-only: adding/editing/deleting items, uploading photos, reordering
+images, likes, and analytics all actually work and persist while the
+server stays warm (see the comment atop `src/lib/data/demo-store.ts` for
+exactly what that does and doesn't survive — a redeploy or cold start
+resets it). Connect Supabase for changes that stick permanently.
