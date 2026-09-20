@@ -1,127 +1,69 @@
 @import "tailwindcss";
 
-/*
-  Embellish Antiques design tokens.
-  Palette: warm cream ground + antique-gold detailing, with one "popped"
-  terracotta accent for CTAs/hover states (the Depop-esque energy the brief
-  asked for) and a deep forest ink for contrast. Rounded, soft-shadow UI
-  throughout — see --radius-* tokens below.
-*/
-
 :root {
-  --color-cream: #faf5ec;
-  --color-cream-soft: #f2e9d8;
-  --color-ink: #241a12;
-  --color-ink-soft: #4a3c2f;
-  --color-pop: #e2551f;
-  --color-pop-dark: #b8410f;
-  --color-forest: #2f4a3c;
-  --color-forest-dark: #203327;
-  --color-gold: #c69a3a;
-  --color-gold-soft: #e8d3a0;
-  --color-cloud: #ffffff;
-  --color-line: #e5d9c3;
-
-  --radius-sm: 0.6rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.5rem;
-  --radius-xl: 2.25rem;
-
-  --shadow-soft: 0 8px 30px -12px rgba(36, 26, 18, 0.25);
-  --shadow-pop: 0 10px 28px -8px rgba(226, 85, 31, 0.45);
+  /* place holder (brand colors) — swap these for the HOA's real palette
+     whenever it's decided; every component below reads from these tokens
+     rather than hardcoding colors, so a rebrand is a one-file change. */
+  --color-primary: #2f5233; /* deep forest green */
+  --color-primary-dark: #223d26;
+  --color-primary-light: #4c7a52;
+  --color-accent: #c9a227; /* warm gold */
+  --color-accent-dark: #a5811a;
+  --color-cream: #f7f5ef;
+  --color-cream-dark: #efe9d8;
+  --color-ink: #22281f;
+  --color-ink-soft: #4b5346;
+  --color-danger: #b3413c;
+  --color-warning: #c9852b;
+  --color-info: #2f6f8f;
+  --color-cork: #c9a97a;
+  --color-cork-dark: #a9835a;
 }
 
 @theme inline {
+  --color-background: var(--color-cream);
+  --color-foreground: var(--color-ink);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-light: var(--color-primary-light);
+  --color-accent: var(--color-accent);
+  --color-accent-dark: var(--color-accent-dark);
   --color-cream: var(--color-cream);
-  --color-cream-soft: var(--color-cream-soft);
+  --color-cream-dark: var(--color-cream-dark);
   --color-ink: var(--color-ink);
   --color-ink-soft: var(--color-ink-soft);
-  --color-pop: var(--color-pop);
-  --color-pop-dark: var(--color-pop-dark);
-  --color-forest: var(--color-forest);
-  --color-forest-dark: var(--color-forest-dark);
-  --color-gold: var(--color-gold);
-  --color-gold-soft: var(--color-gold-soft);
-  --color-cloud: var(--color-cloud);
-  --color-line: var(--color-line);
-
-  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
+  --color-cork: var(--color-cork);
+  --color-cork-dark: var(--color-cork-dark);
 }
 
 body {
   background: var(--color-cream);
   color: var(--color-ink);
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-h1, h2, h3, h4, .font-display {
-  font-family: var(--font-display);
+/* subtle pin-board texture for the announcements section */
+.cork-texture {
+  background-color: var(--color-cork);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(0, 0, 0, 0.06) 0, transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(0, 0, 0, 0.06) 0, transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(0, 0, 0, 0.05) 0, transparent 40%);
 }
 
-::selection {
-  background: var(--color-pop);
-  color: var(--color-cream);
+@keyframes wiggle-in {
+  from {
+    opacity: 0;
+    transform: rotate(0deg) translateY(8px);
+  }
 }
 
-/* Thin, antique-gold scrollbar accent (Webkit only — degrades gracefully) */
-::-webkit-scrollbar {
-  width: 10px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-cream-soft);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-gold-soft);
-  border-radius: 999px;
-}
-
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(1.5deg); }
-}
-
-@keyframes shower-fall {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
-  100% { transform: translate(var(--drift, 0px), 60px) scale(0.4) rotate(25deg); opacity: 0; }
-}
-
-@keyframes staff-note-draw {
-  from { stroke-dashoffset: 240; opacity: 0; }
-  10% { opacity: 1; }
-  to { stroke-dashoffset: 0; opacity: 1; }
-}
-
-@keyframes caret-blink {
-  0%, 45% { opacity: 1; }
-  50%, 95% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-/* Music divider: a gentle periodic wiggle on the treble clef, inviting a
-   click before the music has been started. */
-@keyframes clef-shimmy {
-  0%, 82%, 100% { transform: rotate(90deg) scale(1); }
-  88% { transform: rotate(97deg) scale(1.1); }
-  94% { transform: rotate(83deg) scale(1.1); }
-}
-
-/* Music divider: notes travelling down the rotated staff line in a loop,
-   fading in near the top and out near the bottom. `top` is percentage-based
-   against the divider's own height, so it works at any divider length. */
-@keyframes note-carousel {
-  0% { top: -10%; opacity: 0; }
-  8% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { top: 106%; opacity: 0; }
+.pin-card {
+  animation: wiggle-in 0.35s ease-out;
 }

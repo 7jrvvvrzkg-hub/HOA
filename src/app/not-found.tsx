@@ -1,25 +1,30 @@
-import Link from "next/link";
-import { InvadersGame } from "@/components/invaders-game";
+import TopBar from "@/components/TopBar";
+import Footer from "@/components/Footer";
+import BlockPartyGame from "@/components/BlockPartyGame";
+import { ButtonLink } from "@/components/Button";
+import { Home } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-16 text-center sm:px-6">
-      <span className="font-display text-7xl italic text-pop">404</span>
-      <div>
-        <h1 className="font-display text-2xl">This piece isn&apos;t here</h1>
-        <p className="mt-2 text-ink-soft">
-          Whatever you were looking for has moved, sold, or never existed — but you&apos;re
-          welcome to blast some invaders while you decide where to go next.
-        </p>
-      </div>
+    <div className="flex min-h-screen flex-col">
+      <TopBar />
+      <main className="flex flex-1 flex-col items-center gap-6 bg-primary px-4 py-12 text-center text-cream">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent">404</p>
+          <h1 className="mt-1 text-3xl font-bold sm:text-4xl">This page doesn&apos;t live here.</h1>
+          <p className="mt-2 text-cream/80">
+            While you figure out where you meant to go, here&apos;s a little block-stacking game
+            we put together — Block Party.
+          </p>
+        </div>
 
-      <div className="w-full rounded-[3rem] bg-forest p-6 sm:p-8">
-        <InvadersGame />
-      </div>
+        <BlockPartyGame />
 
-      <Link href="/" className="rounded-full bg-pop px-6 py-3 text-sm font-semibold text-cream shadow-pop">
-        Back to the shop
-      </Link>
+        <ButtonLink href="/" variant="accent" size="md" className="mt-2">
+          <Home size={18} /> Back to the homepage
+        </ButtonLink>
+      </main>
+      <Footer />
     </div>
   );
 }
