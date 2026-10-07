@@ -52,6 +52,25 @@ const ALLOWED_DOCUMENT_EXTENSIONS = new Set([
 // rendered by a browser at all, so they only ever go out as a download.
 export const PREVIEWABLE_MIME_TYPES = new Set([...SAFE_IMAGE_MIME_TYPES, "application/pdf"]);
 
+export type PreviewKind = "image" | "pdf" | "docx" | "xlsx" | "pptx" | "text" | "csv";
+
+/** How the on-site viewer shows a file, or null when a browser can't show
+ * it (older Word/Excel/PowerPoint formats and .pages have no reliable
+ * in-browser renderer, so those stay download-only). Decided by mime type
+ * OR extension, same as the upload allow-list. */
+export function previewKind(mimeType: string, filename: string): PreviewKind | null {
+  const ext = extensionOf(filename);
+  if (SAFE_IMAGE_MIME_TYPES.has(mimeType)) return "image";
+  if (mimeType === "application/pdf" || ext === "pdf") return "pdf";
+  if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || ext === "docx") return "docx";
+  if (mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || ext === "xlsx") return "xlsx";
+  if (mimeType === "application/vnd.openxmlformats-officedocument.presentationml.presentation" || ext === "pptx") return "pptx";
+  if (mimeType === "text/csv" || ext === "csv") return "csv";
+  if (mimeType === "text/plain" || ext === "txt") return "text";
+  if (SAFE_IMAGE_EXTENSIONS.has(ext)) return "image";
+  return null;
+}
+
 function extensionOf(filename: string): string {
   const dot = filename.lastIndexOf(".");
   return dot === -1 ? "" : filename.slice(dot + 1).toLowerCase();
@@ -71,4 +90,28 @@ export function isAllowedDocumentFile(mimeType: string, filename: string): boole
 
 export function isAllowedAvatarImage(mimeType: string, filename: string): boolean {
   return SAFE_IMAGE_MIME_TYPES.has(mimeType) || SAFE_IMAGE_EXTENSIONS.has(extensionOf(filename));
+}
+
+const IMAGE_TYPE_BY_EXTENSION: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+};
+
+/** The Content-Type the preview route actually sends. NOT just the stored
+ * mime type: an upload is accepted when its mime type OR its extension is
+ * on the allow-list, so a file named "x.pdf" could have arrived claiming to
+ * be "text/html". Echoing that back inline would run it as a web page, so
+ * the type sent for anything shown inline is derived from what we decided
+ * the file IS (pdf / a safe image), and everything else goes out as an
+ * opaque download type. */
+export function safeContentType(kind: PreviewKind, mimeType: string, filename: string): string {
+  if (kind === "pdf") return "application/pdf";
+  if (kind === "image") {
+    if (SAFE_IMAGE_MIME_TYPES.has(mimeType)) return mimeType;
+    return IMAGE_TYPE_BY_EXTENSION[extensionOf(filename)] ?? "application/octet-stream";
+  }
+  return "application/octet-stream";
 }

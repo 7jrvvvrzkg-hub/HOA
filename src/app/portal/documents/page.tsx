@@ -4,11 +4,11 @@ import { db } from "@/db";
 import { documents, residentProfiles, users, documentCategoryNotes } from "@/db/schema";
 import { canViewDocument } from "@/lib/access";
 import { documentCategoryLabels } from "@/lib/labels";
-import { PREVIEWABLE_MIME_TYPES } from "@/lib/fileTypes";
 import { deleteDocument } from "@/actions/documents";
 import UploadDocumentForm from "@/components/UploadDocumentForm";
 import { Button } from "@/components/Button";
-import { Download, Eye, FileText, Lock, MessageSquare, User } from "lucide-react";
+import { Download, Lock, MessageSquare, User } from "lucide-react";
+import DocumentPreview from "@/components/DocumentPreview";
 import type { DocCategory } from "@/db/schema";
 
 export default async function DocumentsPage() {
@@ -97,11 +97,10 @@ export default async function DocumentsPage() {
                   <ul className="mt-3 divide-y divide-cream-dark rounded-lg border border-cream-dark bg-white">
                     {docs.map((doc) => {
                       const canDelete = isAdmin || doc.uploadedById === userId;
-                      const canPreview = PREVIEWABLE_MIME_TYPES.has(doc.mimeType);
                       return (
                         <li key={doc.id} className="flex flex-wrap items-center justify-between gap-4 p-4">
                           <div className="flex items-center gap-3">
-                            <FileText className="text-primary" size={20} />
+                            <DocumentPreview id={doc.id} title={doc.title} mimeType={doc.mimeType} fileName={doc.fileName} />
                             <div>
                               <p className="font-medium text-ink">{doc.title}</p>
                               <p className="text-xs text-ink-soft">
@@ -117,16 +116,6 @@ export default async function DocumentsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {canPreview && (
-                              <a
-                                href={`/portal/documents/${doc.id}/preview`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 rounded-md border border-cream-dark px-3 py-1.5 text-sm text-ink hover:border-primary hover:text-primary"
-                              >
-                                <Eye size={14} /> Preview
-                              </a>
-                            )}
                             <a
                               href={`/portal/documents/${doc.id}/download`}
                               className="flex items-center gap-1 rounded-md border border-primary px-3 py-1.5 text-sm text-primary hover:bg-primary hover:text-cream"

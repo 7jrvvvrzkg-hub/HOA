@@ -4,13 +4,13 @@ import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { documents } from "@/db/schema";
 import { canViewDocument } from "@/lib/access";
-import { PREVIEWABLE_MIME_TYPES } from "@/lib/fileTypes";
+import { previewKind, safeContentType } from "@/lib/fileTypes";
 
-/** Same access rules as the download route (see that file), but with the
- * "Content-Disposition: attachment" header left off, so a supported type
- * opens right in the tab instead of forcing a download — only for a small,
- * explicit allow-list of types a browser can actually render safely
- * (raster images and PDF); anything else 415s rather than guessing. */
+/** Same access rules as the download route (see that file). Feeds the
+ * on-site viewer: raster images and PDF are sent inline, and the Office /
+ * text types the viewer knows how to draw are sent as attachments (the
+ * viewer fetches the bytes itself, so a person can't end up with one
+ * rendered by the browser directly). Anything else 415s. */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -31,14 +31,15 @@ export async function GET(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  if (!PREVIEWABLE_MIME_TYPES.has(doc.mimeType)) {
+  const kind = previewKind(doc.mimeType, doc.fileName);
+  if (!kind) {
     return NextResponse.json({ error: "this file type can't be previewed — download it instead" }, { status: 415 });
   }
 
   return new NextResponse(new Uint8Array(doc.fileData), {
     headers: {
-      "Content-Type": doc.mimeType,
-      "Content-Disposition": `inline; filename="${doc.fileName.replace(/"/g, "")}"`,
+      "Content-Type": safeContentType(kind, doc.mimeType, doc.fileName),
+      "Content-Disposition": `${kind === "image" || kind === "pdf" ? "inline" : "attachment"}; filename="${doc.fileName.replace(/"/g, "")}"`,
       "Content-Length": String(doc.fileSize),
       // Belt-and-suspenders alongside the mime-type allow-list on upload —
       // never let the browser guess a different (more dangerous) content

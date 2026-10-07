@@ -67,3 +67,13 @@ body {
 .pin-card {
   animation: wiggle-in 0.35s ease-out;
 }
+
+/* Word preview: drop docx-preview's gray frame so the page sits directly on the blurred backdrop. */
+.docx-holder .docx-preview-wrapper {
+  background: transparent;
+  padding: 0;
+}
+.docx-holder .docx-preview-wrapper > section.docx-preview {
+  margin-bottom: 12px;
+  box-shadow: 0 10px 25px rgb(0 0 0 / 0.3);
+}
