@@ -5,7 +5,7 @@ export default function Hero() {
     <section className="relative overflow-hidden bg-primary text-cream">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-20 sm:px-6 sm:py-28">
         <span className="rounded-full bg-cream/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
-          place holder (community name / est. year)
+          place holder (community name)
         </span>
         <h1 className="max-w-2xl text-4xl font-bold leading-tight sm:text-5xl">
           place holder

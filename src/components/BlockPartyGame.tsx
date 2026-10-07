@@ -313,9 +313,9 @@ export default function BlockPartyGame() {
         />
         {!running && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-md bg-black/60 text-center text-cream">
-            <p className="max-w-[16rem] px-4 text-sm">
-              {gameOver ? `Game over — final score ${score}.` : "This block wandered off the block. Help it stack up while you find your way back."}
-            </p>
+            {gameOver && (
+              <p className="max-w-[16rem] px-4 text-sm">{`Game over — final score ${score}.`}</p>
+            )}
             <Button variant="accent" size="sm" onClick={startGame}>
               <Play size={16} /> {gameOver ? "Play Again" : "Start"}
             </Button>
