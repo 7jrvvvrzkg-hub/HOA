@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession, getFreshRoles } from "@/lib/auth";
-import { Users, FileText, Megaphone, Inbox, ShieldCheck } from "lucide-react";
+import { Users, Megaphone, Inbox, ShieldCheck } from "lucide-react";
 
 const tabs = [
   { href: "/portal/admin", label: "Overview", icon: ShieldCheck },
   { href: "/portal/admin/users", label: "Users", icon: Users },
-  { href: "/portal/admin/documents", label: "Documents", icon: FileText },
   { href: "/portal/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/portal/admin/leads", label: "Leads", icon: Inbox },
 ];

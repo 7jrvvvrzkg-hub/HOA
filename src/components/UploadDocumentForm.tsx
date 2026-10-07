@@ -98,21 +98,16 @@ export default function UploadDocumentForm({
               {residents.length === 0 && (
                 <p className="mt-1 text-xs text-danger">No residents to choose from yet.</p>
               )}
-              <p className="mt-1 text-xs text-ink-soft">
-                Only this resident (and admins) will be able to see this document — for something
-                like a lease or an individual contract rather than a building-wide document.
-              </p>
             </div>
           )}
         </>
       ) : (
         <p className="sm:col-span-2 -mt-1 text-xs text-ink-soft">
-          Only you and the admin team can see what you upload here — it&apos;s just for the two of you,
-          like a personal lease or a form you&apos;re sending in.
+          Only you and admins can see this.
         </p>
       )}
       <div className="sm:col-span-2">
-        <label className="block text-sm font-medium text-ink">File (any document, image, or common office format — max 4MB)</label>
+        <label className="block text-sm font-medium text-ink">File (any document max 4MB)</label>
         <input
           ref={fileInputRef}
           name="file"

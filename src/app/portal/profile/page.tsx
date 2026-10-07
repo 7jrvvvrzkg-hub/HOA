@@ -17,9 +17,6 @@ export default async function ProfilePage() {
         <UserCircle className="text-primary" size={22} />
         <h1 className="text-2xl font-bold text-primary">My Profile</h1>
       </div>
-      <p className="mt-1 text-ink-soft">
-        You can only edit your own profile; roles are managed by admins.
-      </p>
 
       {profile ? (
         <ProfileForm

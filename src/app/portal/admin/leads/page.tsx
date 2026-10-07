@@ -21,9 +21,6 @@ export default async function AdminLeadsPage() {
   return (
     <div>
       <h2 className="text-lg font-semibold text-primary">Contact Form Leads</h2>
-      <p className="mt-1 text-sm text-ink-soft">
-        Every contact-form submission lands here as a simple built-in CRM.
-      </p>
 
       <div className="mt-4 space-y-3">
         {leadList.map((lead) => (

@@ -9,7 +9,7 @@ import "./globals.css";
 // webfont later if the HOA wants a specific brand typeface.
 
 export const metadata: Metadata = {
-  title: "place holder (hoa name)",
+  title: "place holder",
   description: "place holder (hoa tagline / short description)",
 };
 

@@ -130,7 +130,6 @@ export async function uploadDocument(
   }
 
   revalidatePath("/portal/documents");
-  revalidatePath("/portal/admin/documents");
   return { ok: true };
 }
 
@@ -153,5 +152,4 @@ export async function deleteDocument(id: string) {
 
   await db.delete(documents).where(eq(documents.id, id));
   revalidatePath("/portal/documents");
-  revalidatePath("/portal/admin/documents");
 }

@@ -8,10 +8,10 @@ export default function Hero() {
           place holder (community name / est. year)
         </span>
         <h1 className="max-w-2xl text-4xl font-bold leading-tight sm:text-5xl">
-          place holder (hero headline — welcome message for the community)
+          place holder
         </h1>
         <p className="max-w-xl text-base text-cream/85 sm:text-lg">
-          place holder (a sentence or two about the community — amenities, location, character)
+          place holder
         </p>
         <div className="flex flex-wrap gap-3">
           <ButtonLink href="/login" variant="accent">

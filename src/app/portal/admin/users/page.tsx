@@ -23,7 +23,7 @@ export default async function AdminUsersPage() {
       <div>
         <h2 className="text-lg font-semibold text-primary">Create Profile</h2>
         <p className="mt-1 text-sm text-ink-soft">
-          Give the person a temporary password, then have them change it after they sign in.
+          Set a temporary password.
         </p>
         <div className="mt-3">
           <CreateUserForm />
@@ -32,9 +32,6 @@ export default async function AdminUsersPage() {
 
       <div>
         <h2 className="text-lg font-semibold text-primary">All Accounts</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Only admins can see or edit these role tags.
-        </p>
         <div className="mt-3 overflow-x-auto rounded-lg border border-cream-dark bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-cream-dark bg-cream-dark/40 text-xs uppercase text-ink-soft">

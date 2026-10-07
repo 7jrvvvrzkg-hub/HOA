@@ -93,12 +93,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
       <div>
         <h3 className="flex items-center gap-2 font-semibold text-ink">
-          <FileText size={18} className="text-accent-dark" /> Document Notes (shown to this resident)
+          <FileText size={18} className="text-accent-dark" /> Document Notes
         </h3>
         <p className="mt-1 text-sm text-ink-soft">
-          Unlike the notes above, this one isn&apos;t private — each note shows up for{" "}
-          {profile.fullName} under that category on their own Documents page, e.g. asking them to
-          upload or update something.
+          Shows on their Documents page.
         </p>
         <div className="mt-3 space-y-3">
           {(Object.keys(documentCategoryLabels) as DocCategory[]).map((category) => (
@@ -151,7 +149,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <div className="rounded-lg border border-danger/30 bg-danger/5 p-4">
           <h3 className="font-semibold text-danger">Danger Zone</h3>
           <p className="mt-1 text-sm text-ink-soft">
-            Permanently deletes this login and profile. This can&apos;t be undone.
+            This can&apos;t be undone.
           </p>
           <form action={deleteUserAccount.bind(null, profile.userId)} className="mt-3">
             <Button type="submit" size="sm" variant="danger">Delete Account</Button>

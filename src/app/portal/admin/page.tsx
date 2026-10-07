@@ -14,7 +14,7 @@ export default async function AdminOverviewPage() {
 
   const cards = [
     { href: "/portal/admin/users", label: "Total Accounts", value: userCount, icon: Users },
-    { href: "/portal/admin/documents", label: "Documents on File", value: documentCount, icon: FileText },
+    { href: "/portal/documents", label: "Documents on File", value: documentCount, icon: FileText },
     { href: "/portal/admin/announcements", label: "Active Announcements", value: announcementCount, icon: Megaphone },
     { href: "/portal/admin/leads", label: "Open Leads", value: openLeadCount, icon: Inbox },
   ];

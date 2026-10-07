@@ -58,9 +58,6 @@ export default async function DocumentsPage() {
         <Lock className="text-primary" size={22} />
         <h1 className="text-2xl font-bold text-primary">Document Repository</h1>
       </div>
-      <p className="mt-1 text-ink-soft">
-        Documents available to your role — including anything assigned personally to you.
-      </p>
 
       <div className="mt-6">
         <h2 className="text-lg font-semibold text-primary">Add a Document</h2>

@@ -35,7 +35,7 @@ export default async function PortalLayout({ children }: { children: React.React
         <div>
           <div className="px-6 py-5">
             <Link href="/" className="text-lg font-semibold">
-              place holder (hoa name)
+              place holder
             </Link>
             <p className="mt-1 text-xs text-cream/70">Resident &amp; Admin Portal</p>
           </div>

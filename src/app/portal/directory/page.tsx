@@ -32,9 +32,6 @@ export default async function DirectoryPage() {
         <Users className="text-primary" size={22} />
         <h1 className="text-2xl font-bold text-primary">Resident Directory</h1>
       </div>
-      <p className="mt-1 text-ink-soft">
-        Residents only see the optional details each person has chosen to share.
-      </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {profiles.map((p) => (
@@ -72,7 +69,7 @@ export default async function DirectoryPage() {
               )}
               {!p.shareUnit && !p.sharePhone && !p.shareContactEmail && !isAdmin && (
                 <p className="italic text-ink-soft/70">
-                  This resident hasn&apos;t shared any optional info.
+                  Nothing shared yet.
                 </p>
               )}
             </div>

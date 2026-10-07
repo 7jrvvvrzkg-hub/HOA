@@ -16,9 +16,6 @@ export default async function AdminAnnouncementsPage() {
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-semibold text-primary">New Announcement</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          This feeds the pinned-note board on the homepage.
-        </p>
         <div className="mt-3">
           <AnnouncementForm />
         </div>

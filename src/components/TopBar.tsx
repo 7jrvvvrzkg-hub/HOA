@@ -11,7 +11,7 @@ import { ButtonLink, Button } from "@/components/Button";
 // "Contact Us" button below — same destination (#contact), shown twice.
 // The button is the one entry point now.
 const navItems = [
-  { href: "#mission", label: "Mission" },
+  { href: "#mission", label: "Community" },
   { href: "#announcements", label: "Announcements" },
 ];
 
@@ -24,9 +24,9 @@ export default function TopBar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cream/10 text-sm">
-            place holder (logo)
+            logo
           </span>
-          <span>place holder (hoa name)</span>
+          <span>place holder</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">

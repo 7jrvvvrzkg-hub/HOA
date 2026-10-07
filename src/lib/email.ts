@@ -1,5 +1,5 @@
 /**
- * place holder (hoa name) email automation.
+ * place holder email automation.
  *
  * Sends through Resend's HTTP API directly (no SDK dependency needed).
  * If RESEND_API_KEY / EMAIL_FROM aren't set — e.g. on a first test deploy —
@@ -52,7 +52,7 @@ function wrapper(title: string, bodyHtml: string) {
   return `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color:#1f2a24;">
     <div style="background:#2f5233; padding:20px 24px; border-radius:8px 8px 0 0;">
-      <span style="color:#f4efe1; font-size:18px; font-weight:bold;">place holder (hoa name)</span>
+      <span style="color:#f4efe1; font-size:18px; font-weight:bold;">place holder</span>
     </div>
     <div style="border:1px solid #e5e1d6; border-top:none; padding:24px; border-radius:0 0 8px 8px;">
       <h2 style="margin-top:0; color:#2f5233;">${title}</h2>
