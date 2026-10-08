@@ -99,3 +99,14 @@ export async function requireAdmin() {
   if (!roles.includes("ADMIN")) throw new Error("admin access required");
   return session;
 }
+
+/** Admin or director — the staff gate for everything a director may also do
+ * (viewing everything, documents, folders, forms, announcements, creating
+ * accounts). Same fresh-from-the-database check as requireAdmin. */
+export async function requireStaff() {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("not signed in");
+  const roles = await getFreshRoles(session.user.id);
+  if (!roles.includes("ADMIN") && !roles.includes("DIRECTOR")) throw new Error("staff access required");
+  return { session, roles };
+}

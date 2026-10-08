@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { residentProfiles } from "@/db/schema";
+import { isStaff } from "@/lib/access";
 import { addAdminNote } from "@/actions/notes";
 import { Button } from "@/components/Button";
 import { Users, Mail, Phone, Home, StickyNote } from "lucide-react";
@@ -12,7 +13,7 @@ export default async function DirectoryPage() {
   // Fresh from the database, not the session's cached roles — same
   // reasoning as every other access check in this app (see src/lib/auth.ts).
   const roles = await getFreshRoles(session!.user.id);
-  const isAdmin = roles.includes("ADMIN");
+  const isAdmin = isStaff(roles);
 
   // adminNotes is always fetched here, but a Server Component only ever
   // sends the client what its JSX actually renders — and the JSX below

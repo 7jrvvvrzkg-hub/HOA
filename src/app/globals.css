@@ -77,3 +77,55 @@ body {
   margin-bottom: 12px;
   box-shadow: 0 10px 25px rgb(0 0 0 / 0.3);
 }
+
+/* Fillable forms: blanks turned into inputs inside the rendered Word file. */
+.docx-holder input.form-blank {
+  border: 0;
+  border-bottom: 1.5px solid #2f5233;
+  background: rgb(47 82 51 / 0.08);
+  padding: 1px 4px;
+  font: inherit;
+  color: #111;
+  max-width: 100%;
+  border-radius: 2px 2px 0 0;
+}
+.docx-holder input.form-blank:focus {
+  outline: none;
+  background: rgb(47 82 51 / 0.16);
+}
+.docx-holder input.form-blank-check {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.12em;
+  accent-color: #2f5233;
+}
+
+/* Narrow screens: Word pages become one fluid column instead of a fixed
+   816px sheet with big margins (see src/lib/docxFit.ts). */
+.docx-holder .docx-preview-wrapper.docx-fluid {
+  align-items: stretch;
+}
+.docx-holder .docx-preview-wrapper.docx-fluid > section.docx-preview {
+  width: auto !important;
+  min-height: 0 !important;
+  padding: 20px 16px !important;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+.docx-holder .docx-preview-wrapper.docx-fluid > section.docx-preview article {
+  width: auto !important;
+}
+.docx-holder .docx-preview-wrapper.docx-fluid table {
+  width: 100% !important;
+  table-layout: auto;
+}
+.docx-holder .docx-preview-wrapper.docx-fluid td,
+.docx-holder .docx-preview-wrapper.docx-fluid th {
+  width: auto !important;
+}
+.docx-holder .docx-preview-wrapper.docx-fluid input.form-blank {
+  width: 100% !important;
+  box-sizing: border-box;
+  font-size: 16px;
+  display: block;
+}

@@ -6,7 +6,6 @@
 import type {
   RoleTag,
   DocVisibility,
-  DocCategory,
   AnnouncementPriority,
   LeadStatus,
   PortalAccessLevel,
@@ -14,6 +13,7 @@ import type {
 
 export const roleLabels: Record<RoleTag, string> = {
   ADMIN: "Admin",
+  DIRECTOR: "Director",
   OWNER: "Owner",
   RENTER: "Renter",
 };
@@ -59,17 +59,4 @@ export const communicationChannelLabels: Record<string, string> = {
   phone: "Phone",
   "in-person": "In-Person",
   other: "Other",
-};
-
-// These five are intentionally left as generic, numbered placeholders —
-// every HOA names its own document categories, so there's no real default
-// to guess at here. Swap each value below for the real category name
-// whenever you're ready; the underlying data still just says "BYLAWS",
-// "FORMS", etc. under the hood, so nothing else needs to change.
-export const documentCategoryLabels: Record<DocCategory, string> = {
-  BYLAWS: "place holder (category 1)",
-  MEETING_MINUTES: "place holder (category 2)",
-  FORMS: "place holder (category 3)",
-  FINANCIAL: "place holder (category 4)",
-  OTHER: "place holder (category 5)",
 };

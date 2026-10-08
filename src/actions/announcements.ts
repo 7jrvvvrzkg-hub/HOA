@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/db";
 import { announcements, residentProfiles, users } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
+import { isAdmin } from "@/lib/access";
 import { announcementSchema } from "@/lib/validation";
 import { sendEmail, announcementEmailTemplate } from "@/lib/email";
 import type { AnnouncementPriority, DocVisibility } from "@/db/schema";
@@ -15,7 +16,7 @@ export async function createAnnouncement(
   _prev: AnnouncementFormState,
   formData: FormData
 ): Promise<AnnouncementFormState> {
-  const session = await requireAdmin();
+  const { session, roles } = await requireStaff();
 
   const parsed = announcementSchema.safeParse({
     title: formData.get("title"),
@@ -27,6 +28,9 @@ export async function createAnnouncement(
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid submission" };
+  }
+  if (!isAdmin(roles) && parsed.data.audience === "ADMIN_ONLY") {
+    return { ok: false, error: "directors can post to all residents, owners or renters" };
   }
 
   const [announcement] = await db
@@ -60,7 +64,7 @@ export async function updateAnnouncement(
   _prev: AnnouncementFormState,
   formData: FormData
 ): Promise<AnnouncementFormState> {
-  await requireAdmin();
+  const { roles } = await requireStaff();
 
   const parsed = announcementSchema.safeParse({
     title: formData.get("title"),
@@ -74,6 +78,10 @@ export async function updateAnnouncement(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid submission" };
   }
 
+  if (!isAdmin(roles) && parsed.data.audience === "ADMIN_ONLY") {
+    return { ok: false, error: "directors can post to all residents, owners or renters" };
+  }
+
   await db
     .update(announcements)
     .set({ ...parsed.data, updatedAt: new Date() })
@@ -85,14 +93,14 @@ export async function updateAnnouncement(
 }
 
 export async function deleteAnnouncement(id: string) {
-  await requireAdmin();
+  await requireStaff();
   await db.delete(announcements).where(eq(announcements.id, id));
   revalidatePath("/");
   revalidatePath("/portal/admin/announcements");
 }
 
 export async function reorderAnnouncement(id: string, direction: "up" | "down") {
-  await requireAdmin();
+  await requireStaff();
   const all = await db.select().from(announcements).orderBy(asc(announcements.sortOrder));
   const idx = all.findIndex((a) => a.id === id);
   if (idx === -1) return;

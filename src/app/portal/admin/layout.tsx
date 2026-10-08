@@ -1,12 +1,17 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession, getFreshRoles } from "@/lib/auth";
-import { Users, Megaphone, Inbox, ShieldCheck } from "lucide-react";
+import { isNull } from "drizzle-orm";
+import { db } from "@/db";
+import { formSubmissions } from "@/db/schema";
+import { isAdmin, isStaff } from "@/lib/access";
+import { Users, Megaphone, Inbox, ShieldCheck, ClipboardList } from "lucide-react";
 
 const tabs = [
   { href: "/portal/admin", label: "Overview", icon: ShieldCheck },
   { href: "/portal/admin/users", label: "Users", icon: Users },
   { href: "/portal/admin/announcements", label: "Announcements", icon: Megaphone },
+  { href: "/portal/admin/forms", label: "Forms", icon: ClipboardList },
   { href: "/portal/admin/leads", label: "Leads", icon: Inbox },
 ];
 
@@ -20,15 +25,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Fresh from the database, not the session's cached roles — see the
   // comment on setUserRoles in src/actions/users.ts for why that matters.
   const roles = await getFreshRoles(session.user.id);
-  if (!roles.includes("ADMIN")) {
+  if (!isStaff(roles)) {
     redirect("/portal");
   }
+
+  const newSubmissions = await db.$count(formSubmissions, isNull(formSubmissions.reviewedAt));
 
   return (
     <div>
       <div className="flex items-center gap-2 border-b border-cream-dark pb-4">
         <ShieldCheck className="text-accent-dark" size={22} />
-        <h1 className="text-xl font-bold text-primary">Admin Console</h1>
+        <h1 className="text-xl font-bold text-primary">{isAdmin(roles) ? "Admin Console" : "Director Console"}</h1>
       </div>
       <nav className="mt-4 flex flex-wrap gap-2">
         {tabs.map((t) => (
@@ -38,6 +45,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             className="flex items-center gap-2 rounded-md border border-cream-dark px-3 py-1.5 text-sm text-ink hover:border-primary hover:text-primary"
           >
             <t.icon size={14} /> {t.label}
+            {t.href === "/portal/admin/forms" && newSubmissions > 0 && (
+              <span className="rounded-full bg-accent px-1.5 text-xs font-semibold text-ink">{newSubmissions}</span>
+            )}
           </Link>
         ))}
       </nav>

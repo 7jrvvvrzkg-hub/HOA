@@ -10,15 +10,17 @@ meant to be secure long-term.
 | role | email | password |
 | --- | --- | --- |
 | admin | `admin1@hoa.test` | `Admin123!` |
+| director | `director1@hoa.test` | `Admin123!` |
 | owner | `owner1@hoa.test` | `Owner123!` |
 | renter | `renter1@hoa.test` | `Renter123!` |
 
-## full list (10 seeded profiles)
+## full list (11 seeded profiles)
 
 | email | password | role(s) | notes |
 | --- | --- | --- | --- |
 | admin1@hoa.test | Admin123! | admin | admin-only account |
 | admin2@hoa.test | Admin123! | admin, renter | demonstrates one person holding two role tags at once |
+| director1@hoa.test | Admin123! | director | sees everything; can only create owner/renter profiles |
 | owner1@hoa.test | Owner123! | owner | |
 | owner2@hoa.test | Owner123! | owner | |
 | owner3@hoa.test | Owner123! | owner | |

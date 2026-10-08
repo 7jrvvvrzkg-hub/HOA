@@ -23,7 +23,7 @@ type Existing = {
   audience: DocVisibility;
 };
 
-export default function AnnouncementForm({ existing }: { existing?: Existing }) {
+export default function AnnouncementForm({ existing, allowAdminOnly = true }: { existing?: Existing; allowAdminOnly?: boolean }) {
   const action = existing ? updateAnnouncement.bind(null, existing.id) : createAnnouncement;
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -48,7 +48,9 @@ export default function AnnouncementForm({ existing }: { existing?: Existing }) 
       <div>
         <label className="block text-sm font-medium text-ink">Audience</label>
         <select name="audience" defaultValue={existing?.audience ?? "ALL_RESIDENTS"} className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-          {Object.entries(announcementAudienceLabels).map(([value, label]) => (
+          {Object.entries(announcementAudienceLabels)
+            .filter(([value]) => allowAdminOnly || value !== "ADMIN_ONLY")
+            .map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
         </select>

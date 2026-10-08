@@ -1,6 +1,6 @@
 "use server";
 
-import { arrayContains } from "drizzle-orm";
+import { arrayOverlaps } from "drizzle-orm";
 import { db } from "@/db";
 import { leads, users } from "@/db/schema";
 import { contactFormSchema } from "@/lib/validation";
@@ -41,7 +41,7 @@ export async function submitContactForm(
   const admins = await db
     .select({ email: users.email })
     .from(users)
-    .where(arrayContains(users.roles, ["ADMIN"]));
+    .where(arrayOverlaps(users.roles, ["ADMIN", "DIRECTOR"]));
 
   if (admins.length > 0) {
     await sendEmail({

@@ -116,3 +116,20 @@ function escapeHtml(input: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+/** Sent to the board when a resident submits a form. */
+export function formSubmittedTemplate(formTitle: string, residentName: string) {
+  return wrapper(
+    "new form submission",
+    `<p>${escapeHtml(residentName)} submitted "${escapeHtml(formTitle)}".</p>
+     <p>Sign in to the portal and open the Forms tab in the admin console to read it.</p>`
+  );
+}
+
+/** Follow-up when a resident undoes a submission right after sending it. */
+export function formWithdrawnTemplate(formTitle: string, residentName: string) {
+  return wrapper(
+    "form submission withdrawn",
+    `<p>${escapeHtml(residentName)} undid their submission of "${escapeHtml(formTitle)}". It has been removed from the inbox.</p>`
+  );
+}

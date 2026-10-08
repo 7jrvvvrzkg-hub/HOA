@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { documents, residentProfiles, users } from "@/db/schema";
+import { documents, documentFolders, residentProfiles, users } from "@/db/schema";
 import { requireSignedIn, getFreshRoles } from "@/lib/auth";
+import { isStaff } from "@/lib/access";
 import { sendEmail, documentUpdateTemplate } from "@/lib/email";
 import { isAllowedDocumentFile } from "@/lib/fileTypes";
-import type { DocCategory, DocVisibility } from "@/db/schema";
+import type { DocVisibility } from "@/db/schema";
 
 export type DocumentFormState = { ok: boolean; error?: string };
 
@@ -25,15 +26,21 @@ export async function uploadDocument(
 ): Promise<DocumentFormState> {
   const session = await requireSignedIn();
   const roles = await getFreshRoles(session.user.id);
-  const isAdmin = roles.includes("ADMIN");
+  const isAdmin = isStaff(roles);
 
   const title = String(formData.get("title") ?? "").trim();
-  const category = formData.get("category") as DocCategory;
+  const folderIdRaw = String(formData.get("folderId") ?? "");
   const file = formData.get("file") as File | null;
   const notifyAffected = isAdmin && formData.get("notifyAffected") === "on";
 
-  if (!title || !category) {
-    return { ok: false, error: "title and category are required" };
+  if (!title) {
+    return { ok: false, error: "title is required" };
+  }
+  let folderId: string | null = null;
+  if (folderIdRaw) {
+    const folder = await db.query.documentFolders.findFirst({ where: eq(documentFolders.id, folderIdRaw) });
+    if (!folder) return { ok: false, error: "that folder doesn't exist" };
+    folderId = folder.id;
   }
   if (!file || file.size === 0) {
     return { ok: false, error: "choose a file (form/pdf/doc) to upload" };
@@ -96,7 +103,7 @@ export async function uploadDocument(
     .insert(documents)
     .values({
       title,
-      category,
+      folderId,
       visibility,
       fileName: file.name,
       mimeType: file.type || "application/octet-stream",
@@ -133,7 +140,7 @@ export async function uploadDocument(
   return { ok: true };
 }
 
-/** Admins can delete anything. A resident can only delete a document they
+/** Staff (admins and directors) can delete anything. A resident can only delete a document they
  * uploaded themselves — since residents can now upload their own personal
  * documents, this is what lets them undo a mistake without needing an
  * admin, while never letting them touch anything an admin (or another
@@ -141,7 +148,7 @@ export async function uploadDocument(
 export async function deleteDocument(id: string) {
   const session = await requireSignedIn();
   const roles = await getFreshRoles(session.user.id);
-  const isAdmin = roles.includes("ADMIN");
+  const isAdmin = isStaff(roles);
 
   if (!isAdmin) {
     const doc = await db.query.documents.findFirst({ where: eq(documents.id, id) });

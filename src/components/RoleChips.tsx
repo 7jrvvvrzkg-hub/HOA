@@ -8,17 +8,19 @@ import type { RoleTag } from "@/db/schema";
 
 const roleColor: Record<RoleTag, string> = {
   ADMIN: "bg-accent text-ink",
+  DIRECTOR: "bg-accent/40 text-ink",
   OWNER: "bg-primary/10 text-primary",
   RENTER: "bg-info/10 text-info",
 };
 
 const roleLabel: Record<RoleTag, string> = {
   ADMIN: "Admin",
+  DIRECTOR: "Director",
   OWNER: "Owner",
   RENTER: "Renter",
 };
 
-const allRoles: RoleTag[] = ["ADMIN", "OWNER", "RENTER"];
+const allRoles: RoleTag[] = ["ADMIN", "DIRECTOR", "OWNER", "RENTER"];
 
 /** Admin-only control: role tags rendered as removable chips ("x" to
  * remove), plus an "add role" menu — a resident never sees this, only
@@ -32,10 +34,16 @@ export default function RoleChips({
   userId,
   roles,
   isSelf = false,
+  allowedRoles = allRoles,
+  readOnly = false,
 }: {
+  /** Show the chips without any way to change them. */
+  readOnly?: boolean;
   userId: string;
   roles: RoleTag[];
   isSelf?: boolean;
+  /** Which roles can be added here. Directors only get owner and renter. */
+  allowedRoles?: RoleTag[];
 }) {
   const [current, setCurrent] = useState(roles);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +73,19 @@ export default function RoleChips({
     apply([...current, role]);
   }
 
-  const addable = allRoles.filter((r) => !current.includes(r));
+  const addable = allowedRoles.filter((r) => !current.includes(r));
+
+  if (readOnly) {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {current.map((role) => (
+          <span key={role} className={clsx("rounded-full px-2.5 py-1 text-xs font-semibold", roleColor[role])}>
+            {roleLabel[role]}
+          </span>
+        ))}
+      </div>
+    );
+  }
 
   if (isSelf) {
     return (

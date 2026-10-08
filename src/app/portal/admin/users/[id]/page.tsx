@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { residentProfiles, documentCategoryNotes } from "@/db/schema";
+import { residentProfiles, documentFolders, documentFolderNotes } from "@/db/schema";
 import { addAdminNote, addCommunicationLog } from "@/actions/notes";
-import { setDocumentCategoryNote } from "@/actions/documentNotes";
+import { setDocumentFolderNote } from "@/actions/documentNotes";
+import SetPasswordForm from "@/components/SetPasswordForm";
 import { updateResidentAccessLevel, deleteUserAccount } from "@/actions/users";
-import { getSession } from "@/lib/auth";
-import { accessLevelLabels, communicationChannelLabels, documentCategoryLabels } from "@/lib/labels";
+import { getSession, getFreshRoles } from "@/lib/auth";
+import { isAdmin as hasAdmin, canManageAccount, editMinutesLeft } from "@/lib/access";
+import { accessLevelLabels, communicationChannelLabels } from "@/lib/labels";
 import { Button } from "@/components/Button";
 import { StickyNote, Phone, FileText } from "lucide-react";
-import type { DocCategory } from "@/db/schema";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,19 +19,29 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const profile = await db.query.residentProfiles.findFirst({
     where: eq(residentProfiles.id, id),
     with: {
-      user: { columns: { email: true, roles: true } },
+      user: { columns: { email: true, roles: true, createdById: true, createdAt: true } },
       adminNotes: { orderBy: (t, { desc }) => desc(t.createdAt), with: { author: { columns: { email: true } } } },
       communicationLogs: { orderBy: (t, { desc }) => desc(t.createdAt), with: { author: { columns: { email: true } } } },
     },
   });
   if (!profile) notFound();
 
-  const categoryNotes = await db.query.documentCategoryNotes.findMany({
-    where: eq(documentCategoryNotes.residentUserId, profile.userId),
+  const folders = await db.select().from(documentFolders).orderBy(asc(documentFolders.name));
+  const folderNotes = await db.query.documentFolderNotes.findMany({
+    where: eq(documentFolderNotes.residentUserId, profile.userId),
   });
-  const noteByCategory = new Map(categoryNotes.map((n) => [n.category, n.message]));
+  const noteByFolder = new Map(folderNotes.map((n) => [n.folderId, n.message]));
 
   const isSelf = profile.userId === session?.user.id;
+  const myRoles = await getFreshRoles(session!.user.id);
+  const viewerIsAdmin = hasAdmin(myRoles);
+  // Admins can change any account. A director can change only one they
+  // created, and only for the first hour (see canManageAccount).
+  const canManage = canManageAccount(
+    { id: session!.user.id, roles: myRoles },
+    { roles: profile.user.roles, createdById: profile.user.createdById, createdAt: profile.user.createdAt }
+  );
+  const minutesLeft = editMinutesLeft(profile.user.createdAt);
 
   async function setAccessLevel(formData: FormData) {
     "use server";
@@ -58,6 +69,16 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           Roles: {profile.user.roles.join(", ")}
         </p>
 
+        {canManage && !viewerIsAdmin && (
+          <p className="mt-2 text-sm text-ink-soft">
+            You created this profile, so you can change or delete it for {minutesLeft} more minute{minutesLeft === 1 ? "" : "s"}.
+          </p>
+        )}
+        {!canManage && !isSelf && (
+          <p className="mt-2 text-sm text-ink-soft">View only.</p>
+        )}
+
+        {canManage && (<>
         <form action={setAccessLevel} className="mt-3 flex items-center gap-2">
           <label className="text-sm text-ink-soft">Portal Access Level</label>
           <select name="level" defaultValue={profile.portalAccessLevel} className="rounded-md border border-cream-dark px-2 py-1 text-sm">
@@ -69,6 +90,8 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             Save
           </Button>
         </form>
+        <SetPasswordForm userId={profile.userId} />
+        </>)}
       </div>
 
       <div>
@@ -99,18 +122,19 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           Shows on their Documents page.
         </p>
         <div className="mt-3 space-y-3">
-          {(Object.keys(documentCategoryLabels) as DocCategory[]).map((category) => (
+          {folders.length === 0 && (
+            <p className="text-sm text-ink-soft">No folders yet. Create one on the Documents page.</p>
+          )}
+          {folders.map((folder) => (
             <form
-              key={category}
-              action={setDocumentCategoryNote.bind(null, profile.userId, category)}
+              key={folder.id}
+              action={setDocumentFolderNote.bind(null, profile.userId, folder.id)}
               className="flex flex-wrap items-center gap-2 rounded-md border border-cream-dark bg-white p-3"
             >
-              <span className="w-40 shrink-0 text-sm font-medium text-ink">
-                {documentCategoryLabels[category]}
-              </span>
+              <span className="w-40 shrink-0 text-sm font-medium text-ink">{folder.name}</span>
               <input
                 name="message"
-                defaultValue={noteByCategory.get(category) ?? ""}
+                defaultValue={noteByFolder.get(folder.id) ?? ""}
                 placeholder="No note — leave blank to clear"
                 className="min-w-[12rem] flex-1 rounded-md border border-cream-dark px-3 py-1.5 text-sm"
               />
@@ -145,7 +169,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </ul>
       </div>
 
-      {!isSelf && (
+      {!isSelf && canManage && (
         <div className="rounded-lg border border-danger/30 bg-danger/5 p-4">
           <h3 className="font-semibold text-danger">Danger Zone</h3>
           <p className="mt-1 text-sm text-ink-soft">

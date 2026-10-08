@@ -1,22 +1,21 @@
 import { desc, asc, eq } from "drizzle-orm";
 import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
-import { documents, residentProfiles, users, documentCategoryNotes } from "@/db/schema";
-import { canViewDocument } from "@/lib/access";
-import { documentCategoryLabels } from "@/lib/labels";
+import { documents, documentFolders, residentProfiles, users, documentFolderNotes } from "@/db/schema";
+import { canViewDocument, isStaff } from "@/lib/access";
 import { deleteDocument } from "@/actions/documents";
+import { createFolder, renameFolder, deleteFolder, moveDocument } from "@/actions/folders";
 import UploadDocumentForm from "@/components/UploadDocumentForm";
 import { Button } from "@/components/Button";
-import { Download, Lock, MessageSquare, User } from "lucide-react";
+import { Download, Lock, MessageSquare, User, Folder, FolderPlus, Pencil } from "lucide-react";
 import DocumentPreview from "@/components/DocumentPreview";
-import type { DocCategory } from "@/db/schema";
 
 export default async function DocumentsPage() {
   const session = await getSession();
   // Fresh from the database, not the session's cached roles — same
   // reasoning as every other access check in this app (see src/lib/auth.ts).
   const roles = await getFreshRoles(session!.user.id);
-  const isAdmin = roles.includes("ADMIN");
+  const isAdmin = isStaff(roles);
   const userId = session!.user.id;
 
   const allDocs = await db.query.documents.findMany({
@@ -25,13 +24,15 @@ export default async function DocumentsPage() {
   });
   const visibleDocs = allDocs.filter((d) => canViewDocument(roles, userId, d));
 
-  // Notes an admin left for THIS person specifically, under a category —
-  // shown even for a category that has no documents in it yet, since the
-  // point is often "please add one."
-  const myNotes = await db.query.documentCategoryNotes.findMany({
-    where: eq(documentCategoryNotes.residentUserId, userId),
+  const folders = await db.select().from(documentFolders).orderBy(asc(documentFolders.name));
+
+  // Notes staff left for THIS person specifically, under a folder — shown
+  // even for a folder that has no documents in it yet, since the point is
+  // often "please add one."
+  const myNotes = await db.query.documentFolderNotes.findMany({
+    where: eq(documentFolderNotes.residentUserId, userId),
   });
-  const noteByCategory = new Map(myNotes.map((n) => [n.category, n.message]));
+  const noteByFolder = new Map(myNotes.map((n) => [n.folderId, n.message]));
 
   const residents = isAdmin
     ? await db
@@ -41,16 +42,19 @@ export default async function DocumentsPage() {
         .orderBy(asc(residentProfiles.fullName))
     : [];
 
-  const byCategory = visibleDocs.reduce<Record<string, typeof visibleDocs>>((acc, doc) => {
-    (acc[doc.category] ??= []).push(doc);
-    return acc;
-  }, {});
-  // Make sure a category with a note but zero documents still gets a
-  // section, so the note is actually visible.
-  for (const category of noteByCategory.keys()) {
-    (byCategory[category] ??= []);
+  const docsByFolder = new Map<string | null, typeof visibleDocs>();
+  for (const doc of visibleDocs) {
+    const list = docsByFolder.get(doc.folderId) ?? [];
+    list.push(doc);
+    docsByFolder.set(doc.folderId, list);
   }
-  const categoriesToShow = Object.keys(byCategory) as DocCategory[];
+  // Staff see every folder (so they can fill and manage empty ones). Everyone
+  // else sees folders that hold something they can view, or that carry a
+  // note meant for them. "Unfiled" shows only when it has something in it.
+  const sections: { id: string | null; name: string }[] = folders
+    .filter((f) => isAdmin || (docsByFolder.get(f.id)?.length ?? 0) > 0 || noteByFolder.has(f.id))
+    .map((f) => ({ id: f.id, name: f.name }));
+  if ((docsByFolder.get(null)?.length ?? 0) > 0) sections.push({ id: null, name: "Unfiled" });
 
   return (
     <div>
@@ -65,24 +69,68 @@ export default async function DocumentsPage() {
           <UploadDocumentForm
             isAdmin={isAdmin}
             residents={residents.map((r) => ({ id: r.userId, label: `${r.fullName} (${r.email})` }))}
+            folders={folders.map((f) => ({ id: f.id, name: f.name }))}
           />
         </div>
       </div>
 
-      {categoriesToShow.length === 0 ? (
+      {isAdmin && (
+        <form action={createFolder} className="mt-6 flex flex-wrap items-center gap-2">
+          <FolderPlus size={18} className="text-primary" />
+          <input
+            name="name"
+            required
+            maxLength={80}
+            placeholder="New folder name"
+            className="min-w-[12rem] flex-1 rounded-md border border-cream-dark px-3 py-2 text-sm sm:max-w-xs"
+          />
+          <Button type="submit" size="sm">Create Folder</Button>
+        </form>
+      )}
+
+      {sections.length === 0 ? (
         <p className="mt-8 rounded-md border border-dashed border-cream-dark p-6 text-ink-soft">
           No documents have been uploaded yet.
         </p>
       ) : (
         <div className="mt-8 space-y-8">
-          {categoriesToShow.map((category) => {
-            const docs = byCategory[category];
-            const note = noteByCategory.get(category);
+          {sections.map((section) => {
+            const docs = docsByFolder.get(section.id) ?? [];
+            const note = section.id ? noteByFolder.get(section.id) : undefined;
             return (
-              <div key={category}>
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft">
-                  {documentCategoryLabels[category] ?? category}
-                </h2>
+              <div key={section.id ?? "unfiled"} data-folder={section.name}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">
+                    <Folder size={16} className="text-accent-dark" /> {section.name}
+                  </h2>
+                  {isAdmin && section.id && (
+                    <div className="flex items-center gap-2">
+                      <details className="relative">
+                        <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md border border-cream-dark px-2 py-1 text-xs text-ink-soft hover:border-primary hover:text-primary">
+                          <Pencil size={12} /> Rename
+                        </summary>
+                        <form
+                          action={renameFolder.bind(null, section.id)}
+                          className="absolute right-0 z-10 mt-1 flex gap-1 rounded-md border border-cream-dark bg-white p-2 shadow-md"
+                        >
+                          <input
+                            name="name"
+                            required
+                            maxLength={80}
+                            defaultValue={section.name}
+                            className="w-44 rounded-md border border-cream-dark px-2 py-1 text-sm"
+                          />
+                          <Button type="submit" size="sm">Save</Button>
+                        </form>
+                      </details>
+                      <form action={deleteFolder.bind(null, section.id)}>
+                        <Button type="submit" size="sm" variant="outline">
+                          Delete Folder
+                        </Button>
+                      </form>
+                    </div>
+                  )}
+                </div>
                 {note && (
                   <div className="mt-2 flex items-start gap-2 rounded-md border border-accent/40 bg-accent/10 p-3 text-sm text-ink">
                     <MessageSquare size={16} className="mt-0.5 shrink-0 text-accent-dark" />
@@ -122,6 +170,22 @@ export default async function DocumentsPage() {
                             >
                               <Download size={14} /> Download
                             </a>
+                            {isAdmin && (
+                              <form action={moveDocument.bind(null, doc.id)} className="flex items-center gap-1">
+                                <select
+                                  name="folderId"
+                                  defaultValue={doc.folderId ?? ""}
+                                  aria-label="move to folder"
+                                  className="rounded-md border border-cream-dark px-2 py-1.5 text-xs"
+                                >
+                                  <option value="">No folder</option>
+                                  {folders.map((f) => (
+                                    <option key={f.id} value={f.id}>{f.name}</option>
+                                  ))}
+                                </select>
+                                <Button type="submit" size="sm" variant="outline">Move</Button>
+                              </form>
+                            )}
                             {canDelete && (
                               <form action={deleteDocument.bind(null, doc.id)}>
                                 <Button type="submit" size="sm" variant="danger">Delete</Button>

@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { eq, ne } from "drizzle-orm";
+import { eq, ne, isNull } from "drizzle-orm";
 import { db } from "@/db";
-import { users, documents, announcements, leads } from "@/db/schema";
-import { Users, FileText, Megaphone, Inbox } from "lucide-react";
+import { users, documents, announcements, leads, formSubmissions } from "@/db/schema";
+import { Users, FileText, Megaphone, Inbox, ClipboardList } from "lucide-react";
 
 export default async function AdminOverviewPage() {
-  const [userCount, documentCount, announcementCount, openLeadCount] = await Promise.all([
+  const [userCount, documentCount, announcementCount, openLeadCount, newFormCount] = await Promise.all([
     db.$count(users),
     db.$count(documents),
     db.$count(announcements, eq(announcements.active, true)),
     db.$count(leads, ne(leads.status, "RESOLVED")),
+    db.$count(formSubmissions, isNull(formSubmissions.reviewedAt)),
   ]);
 
   const cards = [
@@ -17,10 +18,11 @@ export default async function AdminOverviewPage() {
     { href: "/portal/documents", label: "Documents on File", value: documentCount, icon: FileText },
     { href: "/portal/admin/announcements", label: "Active Announcements", value: announcementCount, icon: Megaphone },
     { href: "/portal/admin/leads", label: "Open Leads", value: openLeadCount, icon: Inbox },
+    { href: "/portal/admin/forms", label: "New Form Submissions", value: newFormCount, icon: ClipboardList },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {cards.map((c) => (
         <Link key={c.href} href={c.href} className="rounded-lg border border-cream-dark bg-white p-5 shadow-sm hover:shadow-md">
           <c.icon className="text-primary" />

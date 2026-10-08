@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { adminNotes, communicationLogs } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export async function addAdminNote(profileId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const { session } = await requireStaff();
   const body = String(formData.get("body") ?? "").trim();
   if (!body) return;
 
@@ -16,7 +16,7 @@ export async function addAdminNote(profileId: string, formData: FormData) {
 }
 
 export async function addCommunicationLog(profileId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const { session } = await requireStaff();
   const channel = String(formData.get("channel") ?? "other");
   const summary = String(formData.get("summary") ?? "").trim();
   if (!summary) return;

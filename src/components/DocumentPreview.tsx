@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { fitDocxToWidth } from "@/lib/docxFit";
 import { FileText, FileSpreadsheet, Presentation, X, Eye } from "lucide-react";
 import { previewKind, type PreviewKind } from "@/lib/fileTypes";
 
@@ -176,6 +177,7 @@ function DocxPages({ url }: { url: string }) {
       ignoreWidth: false,
       breakPages: true,
     });
+    fitDocxToWidth(holder, holder.closest<HTMLElement>(".overflow-y-auto"), false);
   });
   return (
     <>

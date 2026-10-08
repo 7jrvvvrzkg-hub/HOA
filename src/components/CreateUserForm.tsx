@@ -7,7 +7,7 @@ import { roleLabels } from "@/lib/labels";
 
 const initialState: CreateUserFormState = { ok: false };
 
-export default function CreateUserForm() {
+export default function CreateUserForm({ isAdmin = true }: { isAdmin?: boolean }) {
   const [state, formAction, pending] = useActionState(createUserProfile, initialState);
 
   return (
@@ -21,7 +21,7 @@ export default function CreateUserForm() {
         <input name="email" type="email" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-ink">Temporary Password</label>
+        <label className="block text-sm font-medium text-ink">Password</label>
         <input name="password" type="text" required minLength={8} className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm" />
       </div>
       <div>
@@ -31,9 +31,16 @@ export default function CreateUserForm() {
       <fieldset className="sm:col-span-2">
         <legend className="text-sm font-medium text-ink">Roles</legend>
         <div className="mt-1 flex gap-4 text-sm">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="roles" value="ADMIN" /> {roleLabels.ADMIN}
-          </label>
+          {isAdmin && (
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="roles" value="ADMIN" /> {roleLabels.ADMIN}
+            </label>
+          )}
+          {isAdmin && (
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="roles" value="DIRECTOR" /> {roleLabels.DIRECTOR}
+            </label>
+          )}
           <label className="flex items-center gap-2">
             <input type="checkbox" name="roles" value="OWNER" defaultChecked /> {roleLabels.OWNER}
           </label>

@@ -9,7 +9,9 @@ import {
   UserCircle,
   Megaphone,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
+import { isStaff, isAdmin as hasAdmin } from "@/lib/access";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -19,12 +21,13 @@ export default async function PortalLayout({ children }: { children: React.React
   // "Admin Console" link disappears immediately if someone's admin access
   // was just revoked, instead of only after they log back in.
   const roles = await getFreshRoles(session.user.id);
-  const isAdmin = roles.includes("ADMIN");
+  const staff = isStaff(roles);
 
   const navItems = [
     { href: "/portal", label: "Dashboard", icon: LayoutDashboard },
     { href: "/portal/documents", label: "Documents", icon: FileText },
     { href: "/portal/directory", label: "Directory", icon: Users },
+    { href: "/portal/forms", label: "Forms", icon: ClipboardList },
     { href: "/portal/announcements", label: "Announcements", icon: Megaphone },
     { href: "/portal/profile", label: "Profile", icon: UserCircle },
   ];
@@ -50,13 +53,13 @@ export default async function PortalLayout({ children }: { children: React.React
                 {item.label}
               </Link>
             ))}
-            {isAdmin && (
+            {staff && (
               <Link
                 href="/portal/admin"
                 className="mt-2 flex items-center gap-3 whitespace-nowrap rounded-md bg-accent px-3 py-2 font-medium text-ink hover:bg-accent-dark lg:mt-4"
               >
                 <ShieldCheck size={18} />
-                Admin Console
+                {hasAdmin(roles) ? "Admin Console" : "Director Console"}
               </Link>
             )}
           </nav>

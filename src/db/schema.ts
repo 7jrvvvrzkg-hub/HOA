@@ -14,10 +14,12 @@ import {
   pgEnum,
   customType,
   unique,
+  jsonb,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const roleTagEnum = pgEnum("role_tag", ["ADMIN", "OWNER", "RENTER"]);
+export const roleTagEnum = pgEnum("role_tag", ["ADMIN", "OWNER", "RENTER", "DIRECTOR"]);
 export const portalAccessLevelEnum = pgEnum("portal_access_level", ["FULL", "STANDARD", "LIMITED"]);
 export const docVisibilityEnum = pgEnum("doc_visibility", [
   "ALL_RESIDENTS",
@@ -63,6 +65,10 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   roles: roleTagEnum("roles").array().notNull().default([]),
+  // Who created this account, if a director did. Directors can only change
+  // or delete accounts they created themselves, and only for one hour after
+  // (see src/lib/access.ts), so the creator has to be remembered.
+  createdById: text("created_by_id").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -103,11 +109,24 @@ export const adminAccounts = pgTable("admin_accounts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Folders that documents are sorted into. Staff create and name them.
+export const documentFolders = pgTable("document_folders", {
+  id: id(),
+  name: text("name").notNull(),
+  createdById: text("created_by_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // secure document repo.
 export const documents = pgTable("documents", {
   id: id(),
   title: text("title").notNull(),
-  category: docCategoryEnum("category").notNull(),
+  // Legacy: documents used to be sorted into five fixed categories. Folders
+  // replaced that; the column is kept (and empty for new uploads) so old rows
+  // survive the move.
+  category: docCategoryEnum("category"),
+  // Deleting a folder leaves its documents behind, just unfiled.
+  folderId: text("folder_id").references(() => documentFolders.id, { onDelete: "set null" }),
   visibility: docVisibilityEnum("visibility").notNull().default("ALL_RESIDENTS"),
   fileName: text("file_name").notNull(),
   mimeType: text("mime_type").notNull(),
@@ -169,22 +188,52 @@ export const communicationLogs = pgTable("communication_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// A note an admin leaves for one resident under one document category —
-// "please upload your updated insurance certificate" and the like. One
-// slot per resident+category (the admin edits it in place rather than
-// piling up a thread), shown to that resident on their Documents page.
-export const documentCategoryNotes = pgTable(
-  "document_category_notes",
+// A note staff leave for one resident under one document folder —
+// "please upload your updated insurance certificate" and the like. One slot
+// per resident+folder (edited in place rather than piling up a thread),
+// shown to that resident on their Documents page.
+export const documentFolderNotes = pgTable(
+  "document_folder_notes",
   {
     id: id(),
     residentUserId: text("resident_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-    category: docCategoryEnum("category").notNull(),
+    folderId: text("folder_id").notNull().references(() => documentFolders.id, { onDelete: "cascade" }),
     message: text("message").notNull(),
     authorId: text("author_id").notNull().references(() => users.id),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (table) => [unique().on(table.residentUserId, table.category)]
+  (table) => [unique().on(table.residentUserId, table.folderId)]
 );
+
+// Fillable forms. Staff upload a Word (.docx) file; residents open it in the
+// viewer, type into the blanks, and submit.
+export const forms = pgTable("forms", {
+  id: id(),
+  title: text("title").notNull(),
+  description: text("description"),
+  visibility: docVisibilityEnum("visibility").notNull().default("ALL_RESIDENTS"),
+  fileName: text("file_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileData: bytea("file_data").notNull(),
+  fileSize: integer("file_size").notNull(),
+  uploadedById: text("uploaded_by_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type FormAnswer = { label: string; value: string };
+
+// A resident's filled-in copy of a form. `formTitle` is copied in so the
+// record still reads correctly if the form itself is later removed.
+export const formSubmissions = pgTable("form_submissions", {
+  id: id(),
+  formId: text("form_id").references(() => forms.id, { onDelete: "set null" }),
+  formTitle: text("form_title").notNull(),
+  submittedById: text("submitted_by_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  answers: jsonb("answers").$type<FormAnswer[]>().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedById: text("reviewed_by_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   residentProfile: one(residentProfiles, {
@@ -200,7 +249,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   announcementsWritten: many(announcements),
   adminNotesWritten: many(adminNotes),
   communicationLogs: many(communicationLogs),
-  documentCategoryNotes: many(documentCategoryNotes, { relationName: "documentCategoryNoteResident" }),
+  documentFolderNotes: many(documentFolderNotes, { relationName: "documentFolderNoteResident" }),
+  formSubmissions: many(formSubmissions),
 }));
 
 export const residentProfilesRelations = relations(residentProfiles, ({ one, many }) => ({
@@ -213,7 +263,21 @@ export const adminAccountsRelations = relations(adminAccounts, ({ one }) => ({
   user: one(users, { fields: [adminAccounts.userId], references: [users.id] }),
 }));
 
+export const documentFoldersRelations = relations(documentFolders, ({ many }) => ({
+  documents: many(documents),
+}));
+
+export const formsRelations = relations(forms, ({ many }) => ({
+  submissions: many(formSubmissions),
+}));
+
+export const formSubmissionsRelations = relations(formSubmissions, ({ one }) => ({
+  form: one(forms, { fields: [formSubmissions.formId], references: [forms.id] }),
+  submittedBy: one(users, { fields: [formSubmissions.submittedById], references: [users.id] }),
+}));
+
 export const documentsRelations = relations(documents, ({ one }) => ({
+  folder: one(documentFolders, { fields: [documents.folderId], references: [documentFolders.id] }),
   uploadedBy: one(users, {
     fields: [documents.uploadedById],
     references: [users.id],
@@ -234,13 +298,14 @@ export const leadsRelations = relations(leads, ({ one }) => ({
   assignedTo: one(users, { fields: [leads.assignedToId], references: [users.id] }),
 }));
 
-export const documentCategoryNotesRelations = relations(documentCategoryNotes, ({ one }) => ({
+export const documentFolderNotesRelations = relations(documentFolderNotes, ({ one }) => ({
   resident: one(users, {
-    fields: [documentCategoryNotes.residentUserId],
+    fields: [documentFolderNotes.residentUserId],
     references: [users.id],
-    relationName: "documentCategoryNoteResident",
+    relationName: "documentFolderNoteResident",
   }),
-  author: one(users, { fields: [documentCategoryNotes.authorId], references: [users.id] }),
+  folder: one(documentFolders, { fields: [documentFolderNotes.folderId], references: [documentFolders.id] }),
+  author: one(users, { fields: [documentFolderNotes.authorId], references: [users.id] }),
 }));
 
 export const adminNotesRelations = relations(adminNotes, ({ one }) => ({
@@ -253,7 +318,7 @@ export const communicationLogsRelations = relations(communicationLogs, ({ one })
   author: one(users, { fields: [communicationLogs.authorId], references: [users.id] }),
 }));
 
-export type RoleTag = "ADMIN" | "OWNER" | "RENTER";
+export type RoleTag = "ADMIN" | "DIRECTOR" | "OWNER" | "RENTER";
 export type PortalAccessLevel = "FULL" | "STANDARD" | "LIMITED";
 export type DocVisibility = "ALL_RESIDENTS" | "OWNERS_ONLY" | "RENTERS_ONLY" | "ADMIN_ONLY" | "PERSONAL";
 export type DocCategory = "BYLAWS" | "MEETING_MINUTES" | "FORMS" | "FINANCIAL" | "OTHER";

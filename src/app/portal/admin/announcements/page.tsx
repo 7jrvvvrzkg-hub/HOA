@@ -1,12 +1,16 @@
 import { desc, asc } from "drizzle-orm";
 import { db } from "@/db";
 import { announcements } from "@/db/schema";
+import { getSession, getFreshRoles } from "@/lib/auth";
+import { isAdmin } from "@/lib/access";
 import { deleteAnnouncement, reorderAnnouncement } from "@/actions/announcements";
 import AnnouncementForm from "@/components/AnnouncementForm";
 import { Button } from "@/components/Button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
 export default async function AdminAnnouncementsPage() {
+  const session = await getSession();
+  const allowAdminOnly = isAdmin(await getFreshRoles(session!.user.id));
   const announcementList = await db
     .select()
     .from(announcements)
@@ -17,7 +21,7 @@ export default async function AdminAnnouncementsPage() {
       <div>
         <h2 className="text-lg font-semibold text-primary">New Announcement</h2>
         <div className="mt-3">
-          <AnnouncementForm />
+          <AnnouncementForm allowAdminOnly={allowAdminOnly} />
         </div>
       </div>
 
@@ -45,7 +49,7 @@ export default async function AdminAnnouncementsPage() {
                 </span>
               </summary>
               <div className="border-t border-cream-dark p-4">
-                <AnnouncementForm existing={a} />
+                <AnnouncementForm existing={a} allowAdminOnly={allowAdminOnly} />
               </div>
             </details>
           ))}

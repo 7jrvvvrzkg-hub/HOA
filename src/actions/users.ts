@@ -5,7 +5,8 @@ import bcrypt from "bcryptjs";
 import { and, arrayContains, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { users, residentProfiles, adminAccounts, leads } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
+import { isAdmin, canManageAccount } from "@/lib/access";
 import { createUserSchema } from "@/lib/validation";
 import type { RoleTag, PortalAccessLevel } from "@/db/schema";
 
@@ -13,23 +14,55 @@ export type CreateUserFormState = { ok: boolean; error?: string };
 
 const defaultAccessLevel: Record<RoleTag, PortalAccessLevel> = {
   ADMIN: "FULL",
+  DIRECTOR: "FULL",
   OWNER: "STANDARD",
   RENTER: "LIMITED",
 };
+
+/** Who is asking, with roles read fresh from the database (never the cached
+ * session). Throws unless signed in as admin or director. */
+async function staffActor() {
+  const { session, roles } = await requireStaff();
+  return { id: session.user.id, roles };
+}
+
+/** Load the account being changed and confirm this actor may change it:
+ * any account for an admin; for a director only one they created themselves
+ * within the last hour (see canManageAccount). */
+async function loadManageable(actor: { id: string; roles: RoleTag[] }, userId: string) {
+  const target = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    with: { residentProfile: true, adminAccount: true },
+  });
+  if (!target) throw new Error("user not found");
+  if (!canManageAccount(actor, { roles: target.roles, createdById: target.createdById, createdAt: target.createdAt })) {
+    throw new Error(
+      isAdmin(actor.roles)
+        ? "you can't change this account"
+        : "directors can only change an account they created, and only within one hour of creating it"
+    );
+  }
+  return target;
+}
 
 async function countOtherAdmins(excludingUserId: string) {
   return db.$count(users, and(arrayContains(users.roles, ["ADMIN"]), ne(users.id, excludingUserId)));
 }
 
-/** Admin-only: create a brand-new profile (resident and/or admin) with a
- * temporary password, matching the "capability to create profiles" ask. */
+/** Staff: create a brand-new profile with a password. Admins can create any
+ * kind. A director can only create owners and renters (never admins or other
+ * directors), and the new account remembers who made it so that director can
+ * fix a mistake during the next hour. */
 export async function createUserProfile(
   _prev: CreateUserFormState,
   formData: FormData
 ): Promise<CreateUserFormState> {
-  await requireAdmin();
+  const actor = await staffActor();
 
   const roles = formData.getAll("roles") as RoleTag[];
+  if (!isAdmin(actor.roles) && roles.some((r) => r !== "OWNER" && r !== "RENTER")) {
+    return { ok: false, error: "directors can only create owner or renter profiles" };
+  }
   const parsed = createUserSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -46,7 +79,7 @@ export async function createUserProfile(
   if (existing) return { ok: false, error: "an account with that email already exists" };
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  const isAdminRole = parsed.data.roles.includes("ADMIN");
+  const isAdminRole = parsed.data.roles.includes("ADMIN") || parsed.data.roles.includes("DIRECTOR");
   const isResidentRole = parsed.data.roles.includes("OWNER") || parsed.data.roles.includes("RENTER");
   const primaryAccessLevel: PortalAccessLevel = isAdminRole
     ? "FULL"
@@ -55,7 +88,7 @@ export async function createUserProfile(
   await db.transaction(async (tx) => {
     const [user] = await tx
       .insert(users)
-      .values({ email: normalizedEmail, passwordHash, roles: parsed.data.roles })
+      .values({ email: normalizedEmail, passwordHash, roles: parsed.data.roles, createdById: actor.id })
       .returning();
 
     if (isAdminRole) {
@@ -75,7 +108,7 @@ export async function createUserProfile(
   return { ok: true };
 }
 
-/** Admin-only: add or remove a role tag on a profile — the "x to remove a
+/** Add or remove a role tag on a profile — the "x to remove a
  * role" control. Adding OWNER/RENTER creates a ResidentProfile if missing;
  * adding ADMIN creates an AdminAccount if missing. Removing a role never
  * deletes the underlying profile record, just the tag, so re-adding it
@@ -95,18 +128,18 @@ export async function createUserProfile(
  *  - the last remaining admin account can't have its ADMIN tag removed by
  *    anyone, since that would lock every admin out of the console for good. */
 export async function setUserRoles(userId: string, roles: RoleTag[]) {
-  const session = await requireAdmin();
+  const actor = await staffActor();
   if (roles.length === 0) throw new Error("a profile needs at least one role");
 
-  if (userId === session.user.id) {
+  if (userId === actor.id) {
     throw new Error("you can't change your own roles — have another admin do it");
   }
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
-    with: { residentProfile: true, adminAccount: true },
-  });
-  if (!user) throw new Error("user not found");
+  // A director's one-hour window only covers switching owner/renter.
+  if (!isAdmin(actor.roles) && roles.some((r) => r !== "OWNER" && r !== "RENTER")) {
+    throw new Error("directors can only use the owner and renter roles");
+  }
+  const user = await loadManageable(actor, userId);
 
   const losingAdmin = user.roles.includes("ADMIN") && !roles.includes("ADMIN");
   if (losingAdmin && (await countOtherAdmins(userId)) === 0) {
@@ -114,7 +147,7 @@ export async function setUserRoles(userId: string, roles: RoleTag[]) {
   }
 
   const needsResident = roles.includes("OWNER") || roles.includes("RENTER");
-  const needsAdmin = roles.includes("ADMIN");
+  const needsAdmin = roles.includes("ADMIN") || roles.includes("DIRECTOR");
 
   await db.transaction(async (tx) => {
     await tx.update(users).set({ roles, updatedAt: new Date() }).where(eq(users.id, userId));
@@ -132,12 +165,29 @@ export async function setUserRoles(userId: string, roles: RoleTag[]) {
 }
 
 export async function updateResidentAccessLevel(profileId: string, level: PortalAccessLevel) {
-  await requireAdmin();
+  const actor = await staffActor();
+  const profile = await db.query.residentProfiles.findFirst({ where: eq(residentProfiles.id, profileId) });
+  if (!profile) throw new Error("profile not found");
+  await loadManageable(actor, profile.userId);
   await db.update(residentProfiles).set({ portalAccessLevel: level }).where(eq(residentProfiles.id, profileId));
   revalidatePath("/portal/admin/users");
 }
 
-/** Admin-only: permanently delete a login and everything tied to it
+/** Set a new password for an account. Admins for any account; a director
+ * only for one they created, within the first hour. */
+export async function setUserPassword(userId: string, password: string) {
+  const actor = await staffActor();
+  if (typeof password !== "string" || password.length < 8) {
+    throw new Error("password must be at least 8 characters");
+  }
+  if (password.length > 200) throw new Error("password is too long");
+  await loadManageable(actor, userId);
+  const passwordHash = await bcrypt.hash(password, 10);
+  await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  revalidatePath(`/portal/admin/users/${userId}`);
+}
+
+/** Permanently delete a login and everything tied to it
  * (resident profile, admin account, private notes/communication log —
  * all cascade at the database level). Blocked for your own account and for
  * the last remaining admin, same reasoning as setUserRoles above. Content a
@@ -145,13 +195,12 @@ export async function updateResidentAccessLevel(profileId: string, level: Portal
  * with no cascade, so deleting an account that posted any of that fails
  * with a clear error instead of silently orphaning rows. */
 export async function deleteUserAccount(userId: string) {
-  const session = await requireAdmin();
-  if (userId === session.user.id) {
+  const actor = await staffActor();
+  if (userId === actor.id) {
     throw new Error("you can't delete your own account");
   }
 
-  const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
-  if (!user) throw new Error("user not found");
+  const user = await loadManageable(actor, userId);
 
   if (user.roles.includes("ADMIN") && (await countOtherAdmins(userId)) === 0) {
     throw new Error("can't delete the last admin account");

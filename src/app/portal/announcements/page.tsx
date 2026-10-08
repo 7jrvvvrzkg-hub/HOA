@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { desc, asc } from "drizzle-orm";
-import { getSession } from "@/lib/auth";
+import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { announcements } from "@/db/schema";
-import { canView } from "@/lib/access";
+import { canView, isStaff } from "@/lib/access";
 import { announcementPriorityLabels } from "@/lib/labels";
 import { Megaphone, Pin, Pencil } from "lucide-react";
 import clsx from "clsx";
@@ -16,8 +16,8 @@ const priorityTag: Record<string, string> = {
 
 export default async function AnnouncementsPage() {
   const session = await getSession();
-  const roles = session!.user.roles ?? [];
-  const isAdmin = roles.includes("ADMIN");
+  const roles = await getFreshRoles(session!.user.id);
+  const isAdmin = isStaff(roles);
 
   const all = await db
     .select()

@@ -3,31 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { documentCategoryNotes } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
-import type { DocCategory } from "@/db/schema";
+import { documentFolderNotes } from "@/db/schema";
+import { requireStaff } from "@/lib/auth";
 
-/** Admin-only: set (or replace) the note shown to one resident under one
- * document category on their own Documents page — "please upload your
- * updated insurance certificate" and the like. One note per resident per
- * category; writing again just replaces it rather than piling up a thread. */
-export async function setDocumentCategoryNote(
+/** Staff: set (or replace) the note shown to one resident under one document
+ * folder on their own Documents page — "please upload your updated insurance
+ * certificate" and the like. One note per resident per folder; writing again
+ * just replaces it rather than piling up a thread. */
+export async function setDocumentFolderNote(
   residentUserId: string,
-  category: DocCategory,
+  folderId: string,
   formData: FormData
 ) {
-  const session = await requireAdmin();
-  const message = String(formData.get("message") ?? "").trim();
+  const { session } = await requireStaff();
+  const message = String(formData.get("message") ?? "").trim().slice(0, 1000);
   if (!message) {
-    await clearDocumentCategoryNote(residentUserId, category);
+    await clearDocumentFolderNote(residentUserId, folderId);
     return;
   }
 
   await db
-    .insert(documentCategoryNotes)
-    .values({ residentUserId, category, message, authorId: session.user.id })
+    .insert(documentFolderNotes)
+    .values({ residentUserId, folderId, message, authorId: session.user.id })
     .onConflictDoUpdate({
-      target: [documentCategoryNotes.residentUserId, documentCategoryNotes.category],
+      target: [documentFolderNotes.residentUserId, documentFolderNotes.folderId],
       set: { message, authorId: session.user.id, updatedAt: new Date() },
     });
 
@@ -35,11 +34,11 @@ export async function setDocumentCategoryNote(
   revalidatePath(`/portal/admin/users`);
 }
 
-export async function clearDocumentCategoryNote(residentUserId: string, category: DocCategory) {
-  await requireAdmin();
+export async function clearDocumentFolderNote(residentUserId: string, folderId: string) {
+  await requireStaff();
   await db
-    .delete(documentCategoryNotes)
-    .where(and(eq(documentCategoryNotes.residentUserId, residentUserId), eq(documentCategoryNotes.category, category)));
+    .delete(documentFolderNotes)
+    .where(and(eq(documentFolderNotes.residentUserId, residentUserId), eq(documentFolderNotes.folderId, folderId)));
   revalidatePath("/portal/documents");
   revalidatePath(`/portal/admin/users`);
 }

@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/portal/admin")) {
     const roles = (token.roles as string[]) ?? [];
-    if (!roles.includes("ADMIN")) {
+    if (!roles.includes("ADMIN") && !roles.includes("DIRECTOR")) {
       return NextResponse.redirect(new URL("/portal", request.url));
     }
   }

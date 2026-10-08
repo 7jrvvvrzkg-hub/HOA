@@ -20,7 +20,7 @@ async function hash(pw: string) {
   return bcrypt.hash(pw, 10);
 }
 
-async function findOrCreateUser(email: string, passwordHash: string, roles: ("ADMIN" | "OWNER" | "RENTER")[]) {
+async function findOrCreateUser(email: string, passwordHash: string, roles: ("ADMIN" | "DIRECTOR" | "OWNER" | "RENTER")[]) {
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
   if (existing) return existing;
   const [created] = await db.insert(users).values({ email, passwordHash, roles }).returning();
@@ -54,6 +54,13 @@ async function main() {
       shareUnit: true,
       portalAccessLevel: "FULL",
     });
+  }
+
+  // director — sees everything an admin sees, but can only create new
+  // owner/renter profiles (and only change those for an hour).
+  const director1 = await findOrCreateUser("director1@hoa.test", adminHash, ["DIRECTOR"]);
+  if (!(await db.query.adminAccounts.findFirst({ where: eq(adminAccounts.userId, director1.id) }))) {
+    await db.insert(adminAccounts).values({ userId: director1.id, fullName: "place holder (director 1 name)" });
   }
 
   // 3-6. owners

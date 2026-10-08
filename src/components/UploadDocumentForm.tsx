@@ -3,7 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { uploadDocument, type DocumentFormState } from "@/actions/documents";
 import { Button } from "@/components/Button";
-import { documentCategoryLabels, docVisibilityLabels } from "@/lib/labels";
+import { docVisibilityLabels } from "@/lib/labels";
 import { compressImageIfNeeded } from "@/lib/compressImage";
 
 const initialState: DocumentFormState = { ok: false };
@@ -13,7 +13,9 @@ const FILE_ACCEPT = ".pdf,.doc,.docx,.pages,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv
 export default function UploadDocumentForm({
   isAdmin = false,
   residents = [],
+  folders = [],
 }: {
+  folders?: { id: string; name: string }[];
   /** Everyone can upload, but only an admin gets to choose who sees it — a
    * resident's own upload is always private to just them and admins, so the
    * visibility/resident-picker controls below only render for an admin. */
@@ -63,10 +65,11 @@ export default function UploadDocumentForm({
         <input name="title" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm" />
       </div>
       <div className={isAdmin ? "" : "sm:col-span-2"}>
-        <label className="block text-sm font-medium text-ink">Category</label>
-        <select name="category" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
-          {Object.entries(documentCategoryLabels).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
+        <label className="block text-sm font-medium text-ink">Folder</label>
+        <select name="folderId" defaultValue="" className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm">
+          <option value="">No folder</option>
+          {folders.map((f) => (
+            <option key={f.id} value={f.id}>{f.name}</option>
           ))}
         </select>
       </div>
@@ -103,7 +106,7 @@ export default function UploadDocumentForm({
         </>
       ) : (
         <p className="sm:col-span-2 -mt-1 text-xs text-ink-soft">
-          Only you and admins can see this.
+          Only you and the board can see this.
         </p>
       )}
       <div className="sm:col-span-2">
