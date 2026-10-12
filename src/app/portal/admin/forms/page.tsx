@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { forms, formSubmissions } from "@/db/schema";
 import { deleteForm, markSubmissionReviewed } from "@/actions/forms";
 import UploadFormForm from "@/components/UploadFormForm";
+import FilledFormViewer from "@/components/FilledFormViewer";
 import { Button } from "@/components/Button";
 import { docVisibilityLabels } from "@/lib/labels";
 
@@ -57,6 +58,9 @@ export default async function AdminFormsPage() {
                     </span>
                   </summary>
                   <div className="border-t border-cream-dark p-4">
+                    <div className="mb-3">
+                      <FilledFormViewer formId={s.formId} title={s.formTitle} answers={s.answers} />
+                    </div>
                     <table className="w-full text-left text-sm">
                       <tbody>
                         {s.answers.map((a, i) => (

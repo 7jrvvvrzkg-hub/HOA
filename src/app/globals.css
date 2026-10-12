@@ -129,3 +129,22 @@ body {
   font-size: 16px;
   display: block;
 }
+
+/* Board's read-only view of a submitted form: what was typed, written on the line. */
+.docx-holder .form-answer {
+  display: inline-block;
+  min-width: 10ch;
+  max-width: 100%;
+  border-bottom: 1.5px solid #2f5233;
+  background: rgb(47 82 51 / 0.08);
+  padding: 1px 4px;
+  color: #111;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  vertical-align: bottom;
+}
+.docx-holder .form-answer-check {
+  font-size: 1.15em;
+  line-height: 1;
+  color: #2f5233;
+}
