@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
 import Providers from "@/components/Providers";
+// Cinzel: the closest free match to the wordmark in the Tazewell Place logo
+// (its lowercase letters are small capitals, like the logo). Self-hosted via
+// @fontsource so there is no runtime request to Google and builds work offline.
+import "@fontsource/cinzel/400.css";
+import "@fontsource/cinzel/500.css";
+import "@fontsource/cinzel/600.css";
+import "@fontsource/cinzel/700.css";
+import "@fontsource/cinzel/800.css";
 import "./globals.css";
 
 // Using the system font stack (defined in globals.css) instead of

@@ -48,7 +48,7 @@ export default async function PortalDashboard() {
     <div>
       <h1 className="text-2xl font-bold text-primary">Welcome</h1>
       <p className="mt-1 text-ink-soft">
-        Signed in as {session!.user.email}
+        Signed in as <span className="font-plain">{session!.user.email}</span>
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

@@ -27,7 +27,7 @@ export default async function AdminLeadsPage() {
           <div key={lead.id} className="rounded-lg border border-cream-dark bg-white p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="font-medium text-ink">{lead.name} <span className="text-ink-soft">— {lead.email}</span></p>
+                <p className="font-medium text-ink">{lead.name} <span className="font-plain text-ink-soft">— {lead.email}</span></p>
                 {lead.phone && <p className="text-xs text-ink-soft">{lead.phone}</p>}
               </div>
               <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", statusTag[lead.status])}>

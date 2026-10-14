@@ -50,9 +50,7 @@ export default async function PortalLayout({ children }: { children: React.React
         <div>
           <div className="px-6 py-5">
             <Link href="/" className="flex items-center gap-3 text-lg font-semibold">
-              <span className="flex items-center justify-center rounded-sm bg-white p-[3px]">
-                <Logo height={36} />
-              </span>
+              <Logo height={38} />
               <span className="font-serif uppercase tracking-[0.18em]">Tazewell Place</span>
             </Link>
             <p className="mt-1 text-xs text-cream/70">Resident &amp; Admin Portal</p>
@@ -82,7 +80,7 @@ export default async function PortalLayout({ children }: { children: React.React
           </nav>
         </div>
         <div className="px-6 py-4 text-sm">
-          <p className="truncate text-cream/80">{session.user.email}</p>
+          <p className="font-plain truncate text-cream/80">{session.user.email}</p>
           <SignOutButton />
         </div>
       </aside>

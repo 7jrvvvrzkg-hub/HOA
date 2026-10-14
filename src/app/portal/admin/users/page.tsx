@@ -69,7 +69,7 @@ export default async function AdminUsersPage() {
                         {isSelf && <span className="text-xs text-ink-soft/70">(you)</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">{u.email}</td>
+                    <td className="font-plain px-4 py-3 text-ink-soft">{u.email}</td>
                     <td className="px-4 py-3">
                       <RoleChips
                         userId={u.id}

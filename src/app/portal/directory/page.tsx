@@ -65,7 +65,7 @@ export default async function DirectoryPage() {
               )}
               {(isAdmin || p.shareContactEmail) && (p.contactEmail || p.user.email) && (
                 <p className="flex items-center gap-2">
-                  <Mail size={14} className="text-accent" /> {p.contactEmail ?? p.user.email}
+                  <Mail size={14} className="text-accent" /> <span className="font-plain">{p.contactEmail ?? p.user.email}</span>
                 </p>
               )}
               {!p.shareUnit && !p.sharePhone && !p.shareContactEmail && !isAdmin && (

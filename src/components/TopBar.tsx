@@ -38,9 +38,7 @@ export default function TopBar() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-          <span className="flex items-center justify-center rounded-sm bg-white p-[3px]">
-            <Logo height={46} animate />
-          </span>
+          <Logo height={56} animate />
           <span className="font-serif uppercase tracking-[0.18em] drop-shadow">Tazewell Place</span>
         </Link>
 

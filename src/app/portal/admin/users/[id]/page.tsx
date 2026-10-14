@@ -62,7 +62,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           ) : null}
           <div>
             <h2 className="text-lg font-semibold text-primary">{profile.fullName}</h2>
-            <p className="text-sm text-ink-soft">{profile.user.email}</p>
+            <p className="font-plain text-sm text-ink-soft">{profile.user.email}</p>
           </div>
         </div>
         <p className="mt-1 text-xs uppercase tracking-wide text-ink-soft">
