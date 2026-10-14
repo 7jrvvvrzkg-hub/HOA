@@ -1,0 +1,40 @@
+import { Mail, Phone, MapPin } from "lucide-react";
+
+export default function MissionSection() {
+  return (
+    <section id="mission" className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <div className="grid gap-10 md:grid-cols-2">
+        <div>
+          <h2 className="text-2xl font-bold text-primary sm:text-3xl">
+            Our Community
+          </h2>
+          <p className="mt-4 text-ink-soft">
+            Tazewell Place is a condominium community at 230 West Tazewell Street in downtown Norfolk, run by the
+            Tazewell Place Condominium Unit Owners Association.
+          </p>
+          <p className="mt-4 text-ink-soft">
+            Residents can sign in to read announcements, find association documents, and fill out forms online.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-cream-dark bg-white/60 p-6">
+          <h3 className="text-lg font-semibold text-primary">Contact Us</h3>
+          <ul className="mt-4 space-y-3 text-sm text-ink-soft">
+            <li className="flex items-center gap-3">
+              <MapPin size={18} className="text-accent" />
+              230 West Tazewell Street, Norfolk, VA
+            </li>
+            <li className="flex items-center gap-3">
+              <Phone size={18} className="text-accent" />
+              phone number
+            </li>
+            <li className="flex items-center gap-3">
+              <Mail size={18} className="text-accent" />
+              email
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
