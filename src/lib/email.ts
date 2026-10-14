@@ -51,11 +51,11 @@ export async function sendEmail({ to, subject, html }: SendArgs) {
 function wrapper(title: string, bodyHtml: string) {
   return `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color:#1f2a24;">
-    <div style="background:#6f2f25; padding:20px 24px; border-radius:8px 8px 0 0;">
+    <div style="background:#2f5233; padding:20px 24px; border-radius:8px 8px 0 0;">
       <span style="color:#f4efe1; font-size:18px; font-weight:bold; letter-spacing:3px; text-transform:uppercase;">Tazewell Place</span>
     </div>
     <div style="border:1px solid #e5e1d6; border-top:none; padding:24px; border-radius:0 0 8px 8px;">
-      <h2 style="margin-top:0; color:#6f2f25;">${title}</h2>
+      <h2 style="margin-top:0; color:#2f5233;">${title}</h2>
       ${bodyHtml}
       <p style="margin-top:32px; font-size:12px; color:#7a7a70;">
         Tazewell Place Condominium Unit Owners Association · 230 West Tazewell Street, Norfolk, VA
@@ -139,7 +139,7 @@ export function passwordResetTemplate(link: string) {
   return wrapper(
     "reset your password",
     `<p>Someone asked to reset the password for this account. If that was you, use the button below within one hour.</p>
-     <p><a href="${escapeHtml(link)}" style="display:inline-block;background:#6f2f25;color:#f4efe1;padding:10px 18px;border-radius:6px;text-decoration:none;">Choose a new password</a></p>
+     <p><a href="${escapeHtml(link)}" style="display:inline-block;background:#2f5233;color:#f4efe1;padding:10px 18px;border-radius:6px;text-decoration:none;">Choose a new password</a></p>
      <p style="font-size:13px;color:#555;">If the button doesn't work, copy this address into your browser:<br/>${escapeHtml(link)}</p>
      <p style="font-size:13px;color:#555;">If you didn't ask for this, you can ignore this message. Your password won't change.</p>`
   );

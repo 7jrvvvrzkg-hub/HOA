@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Menu, X, LogIn, LogOut, Mail, LayoutDashboard } from "lucide-react";
@@ -19,15 +19,29 @@ const navItems = [
 export default function TopBar() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  // Transparent over the hero photo at the top of the page; picks up a solid
+  // background once you scroll (or open the mobile menu) so it stays readable.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const solid = scrolled || open;
 
   return (
-    <header className="sticky top-0 z-50 bg-primary text-cream shadow-md">
+    <header
+      className={clsx(
+        "fixed inset-x-0 top-0 z-50 text-cream transition-colors duration-300",
+        solid ? "bg-primary-dark/95 shadow-md backdrop-blur" : "bg-transparent"
+      )}
+    >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-          <span className="flex h-10 w-9 items-center justify-center rounded-sm bg-cream">
-            <Logo height={34} />
+          <span className="flex items-center justify-center rounded-sm bg-white p-[3px]">
+            <Logo height={46} animate />
           </span>
-          <span className="font-serif uppercase tracking-[0.18em]">Tazewell Place</span>
+          <span className="font-serif uppercase tracking-[0.18em] drop-shadow">Tazewell Place</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">

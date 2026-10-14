@@ -14,7 +14,7 @@ export default function GallerySection() {
   return (
     <section id="gallery" className="bg-cream-dark/40 py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className="text-center text-2xl font-bold text-primary sm:text-3xl">Our Home</h2>
+        <h2 className="text-center text-2xl font-bold text-primary sm:text-3xl">Gallery</h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-ink-soft">
           Brick, heavy timber, and a sunlit atrium in the heart of downtown Norfolk.
         </p>

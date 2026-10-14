@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { ButtonLink } from "@/components/Button";
-import Logo from "@/components/Logo";
 
 export default function Hero() {
   return (
@@ -13,8 +12,10 @@ export default function Hero() {
         sizes="100vw"
         className="object-cover object-center"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/90 via-primary-dark/70 to-primary-dark/30" />
-      <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-8 px-4 py-16 sm:px-6 sm:py-28 md:flex-row md:items-center md:justify-between">
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
+      {/* soft shade at the very top so the menu stays readable over the photo */}
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/50 to-transparent" />
+      <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-8 px-4 pb-16 pt-32 sm:px-6 sm:pb-28 sm:pt-44">
         <div className="flex flex-col items-start gap-6">
           <span className="rounded-full bg-cream/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent backdrop-blur-sm">
             230 West Tazewell Street · Norfolk, VA
@@ -33,9 +34,6 @@ export default function Hero() {
               Contact Us
             </ButtonLink>
           </div>
-        </div>
-        <div className="hidden rounded-lg bg-cream/95 p-6 shadow-xl md:block">
-          <Logo height={220} animate />
         </div>
       </div>
     </section>

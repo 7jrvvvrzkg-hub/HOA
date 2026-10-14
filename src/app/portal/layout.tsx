@@ -50,8 +50,8 @@ export default async function PortalLayout({ children }: { children: React.React
         <div>
           <div className="px-6 py-5">
             <Link href="/" className="flex items-center gap-3 text-lg font-semibold">
-              <span className="flex h-10 w-9 items-center justify-center rounded-sm bg-cream">
-                <Logo height={34} />
+              <span className="flex items-center justify-center rounded-sm bg-white p-[3px]">
+                <Logo height={36} />
               </span>
               <span className="font-serif uppercase tracking-[0.18em]">Tazewell Place</span>
             </Link>
