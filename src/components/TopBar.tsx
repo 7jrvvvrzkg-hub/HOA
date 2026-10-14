@@ -86,8 +86,11 @@ export default function TopBar() {
           gives this a smooth "come down" instead of an instant snap. */}
       <div
         className={clsx(
-          "grid overflow-hidden border-t border-cream/10 bg-primary px-4 transition-[grid-template-rows] duration-300 ease-in-out md:hidden",
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          "grid overflow-hidden px-4 transition-[grid-template-rows] duration-300 ease-in-out md:hidden",
+          // The divider only exists while the menu is open — drawn on the
+          // closed (zero-height) panel it showed up as a thin stray line
+          // under the bar at the top of the page.
+          open ? "grid-rows-[1fr] border-t border-cream/10" : "grid-rows-[0fr]"
         )}
       >
         <nav className="flex min-h-0 flex-col gap-3 overflow-hidden text-sm font-medium [&>:first-child]:mt-3 [&>:last-child]:mb-4">

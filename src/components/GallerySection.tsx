@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ZoomImage from "@/components/ZoomImage";
 
 const photos = [
   { src: "/images/atrium-wide.jpg", w: 1600, h: 1261, alt: "The timber-framed atrium with skylights", span: "sm:col-span-2 sm:row-span-2" },
@@ -21,13 +21,13 @@ export default function GallerySection() {
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-4">
           {photos.map((p) => (
             <div key={p.src} className={`relative min-h-48 overflow-hidden rounded-lg ${p.span}`}>
-              <Image
+              <ZoomImage
                 src={p.src}
                 alt={p.alt}
                 width={p.w}
                 height={p.h}
                 sizes="(min-width: 640px) 50vw, 100vw"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
               />
             </div>
           ))}
