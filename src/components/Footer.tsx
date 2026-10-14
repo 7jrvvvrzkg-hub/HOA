@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid gap-8 sm:grid-cols-3">
           <div>
             <p className="font-semibold uppercase tracking-[0.18em] text-cream">Tazewell Place</p>
-            <p className="mt-2 text-sm">Tazewell Place Condominium Unit Owners Association</p>
+            <p className="mt-2 text-sm">Tazewell Place Condominium Association</p>
           </div>
           <div>
             <p className="font-semibold text-cream">Quick Links</p>
@@ -26,7 +26,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t border-cream/10 pt-6 text-xs text-cream/60">
-          <p>copyright line © year</p>
+          <p>© 2026 Tazewell Place Condominium Association</p>
           <p>
             Made by{" "}
             <a href="https://bownode.com" target="_blank" rel="noopener noreferrer" className="text-cream/80 hover:text-cream hover:underline">

@@ -24,7 +24,7 @@ export default function Hero() {
             Welcome to Tazewell Place
           </h1>
           <p className="max-w-xl text-base text-cream/90 sm:text-lg">
-            News, documents, and forms for the residents and owners of our community, all in one place.
+            place holder (short description of site)
           </p>
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/login" variant="accent">

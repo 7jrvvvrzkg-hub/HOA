@@ -16,7 +16,7 @@ export default function GallerySection() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <h2 className="text-center text-2xl font-bold text-primary sm:text-3xl">Gallery</h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-ink-soft">
-          Brick, heavy timber, and a sunlit atrium in the heart of downtown Norfolk.
+          Brick, timber, and a sunlit atrium in the heart of downtown Norfolk.
         </p>
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-4">
           {photos.map((p) => (

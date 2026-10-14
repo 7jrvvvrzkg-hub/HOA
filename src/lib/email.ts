@@ -58,7 +58,7 @@ function wrapper(title: string, bodyHtml: string) {
       <h2 style="margin-top:0; color:#2f5233;">${title}</h2>
       ${bodyHtml}
       <p style="margin-top:32px; font-size:12px; color:#7a7a70;">
-        Tazewell Place Condominium Unit Owners Association · 230 West Tazewell Street, Norfolk, VA
+        Tazewell Place Condominium Association · 230 West Tazewell Street, Norfolk, VA
       </p>
     </div>
   </div>`;

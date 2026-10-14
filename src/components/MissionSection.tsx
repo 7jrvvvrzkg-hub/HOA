@@ -9,11 +9,7 @@ export default function MissionSection() {
             Our Community
           </h2>
           <p className="mt-4 text-ink-soft">
-            Tazewell Place is a condominium community at 230 West Tazewell Street in downtown Norfolk, run by the
-            Tazewell Place Condominium Unit Owners Association.
-          </p>
-          <p className="mt-4 text-ink-soft">
-            Residents can sign in to read announcements, find association documents, and fill out forms online.
+            placeholder (slightly more detailed info)
           </p>
         </div>
 
