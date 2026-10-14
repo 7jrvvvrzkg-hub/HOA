@@ -61,16 +61,21 @@ export default async function AdminFormsPage() {
                     <div className="mb-3">
                       <FilledFormViewer formId={s.formId} title={s.formTitle} answers={s.answers} />
                     </div>
-                    <table className="w-full text-left text-sm">
-                      <tbody>
-                        {s.answers.map((a, i) => (
-                          <tr key={i} className="border-b border-cream-dark last:border-0">
-                            <td className="w-1/3 py-2 pr-3 align-top text-ink-soft">{a.label}</td>
-                            <td className="py-2 align-top text-ink">{a.value || "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    {/* The filled form is the record. This plain list only shows
+                        if the original form was deleted, since then there's
+                        nothing left to draw the answers on. */}
+                    {!s.formId && (
+                      <table className="w-full text-left text-sm">
+                        <tbody>
+                          {s.answers.map((a, i) => (
+                            <tr key={i} className="border-b border-cream-dark last:border-0">
+                              <td className="w-1/3 py-2 pr-3 align-top text-ink-soft">{a.label}</td>
+                              <td className="py-2 align-top text-ink">{a.value || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                     <form action={markSubmissionReviewed.bind(null, s.id, !s.reviewedAt)} className="mt-3">
                       <Button type="submit" size="sm" variant="outline">
                         {s.reviewedAt ? "Mark as New" : "Mark Reviewed"}

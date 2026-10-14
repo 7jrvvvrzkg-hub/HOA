@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 import Hero from "@/components/Hero";
 import BulletinBoard from "@/components/BulletinBoard";
 import MissionSection from "@/components/MissionSection";
+import GallerySection from "@/components/GallerySection";
+import HistorySection from "@/components/HistorySection";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
 
@@ -18,6 +20,8 @@ export default function HomePage() {
         <Hero />
         <BulletinBoard />
         <MissionSection />
+        <GallerySection />
+        <HistorySection />
         <section className="bg-cream-dark/40 py-16">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <h2 className="mb-8 text-center text-2xl font-bold text-primary sm:text-3xl">

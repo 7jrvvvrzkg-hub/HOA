@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { documentFolderNotes } from "@/db/schema";
 import { requireStaff } from "@/lib/auth";
+import { logActivity, nameOf } from "@/lib/activity";
 
 /** Staff: set (or replace) the note shown to one resident under one document
  * folder on their own Documents page — "please upload your updated insurance
@@ -30,15 +31,17 @@ export async function setDocumentFolderNote(
       set: { message, authorId: session.user.id, updatedAt: new Date() },
     });
 
-  revalidatePath("/portal/documents");
+  await logActivity({ actorId: session.user.id, category: "folder", summary: `Left a document note for ${await nameOf(residentUserId)}` });
+  revalidatePath("/portal", "layout");
   revalidatePath(`/portal/admin/users`);
 }
 
 export async function clearDocumentFolderNote(residentUserId: string, folderId: string) {
-  await requireStaff();
+  const { session } = await requireStaff();
   await db
     .delete(documentFolderNotes)
     .where(and(eq(documentFolderNotes.residentUserId, residentUserId), eq(documentFolderNotes.folderId, folderId)));
-  revalidatePath("/portal/documents");
+  await logActivity({ actorId: session.user.id, category: "folder", summary: `Cleared a document note for ${await nameOf(residentUserId)}` });
+  revalidatePath("/portal", "layout");
   revalidatePath(`/portal/admin/users`);
 }

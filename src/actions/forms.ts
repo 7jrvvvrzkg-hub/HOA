@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { forms, formSubmissions, users } from "@/db/schema";
 import { requireSignedIn, requireStaff, getFreshRoles } from "@/lib/auth";
 import { canView } from "@/lib/access";
+import { logActivity } from "@/lib/activity";
 import { formAnswersSchema } from "@/lib/validation";
 import { sendEmail, formSubmittedTemplate, formWithdrawnTemplate } from "@/lib/email";
 import type { DocVisibility } from "@/db/schema";
@@ -51,6 +52,7 @@ export async function uploadForm(_prev: UploadFormState, formData: FormData): Pr
     return { ok: false, error: "that doesn't look like a real Word (.docx) file" };
   }
 
+  await logActivity({ actorId: session.user.id, category: "form", summary: `Added the form "${title}"` });
   await db.insert(forms).values({
     title,
     description: description || null,
@@ -62,16 +64,18 @@ export async function uploadForm(_prev: UploadFormState, formData: FormData): Pr
     uploadedById: session.user.id,
   });
 
-  revalidatePath("/portal/forms");
-  revalidatePath("/portal/admin/forms");
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal", "layout");
   return { ok: true };
 }
 
 export async function deleteForm(formId: string) {
-  await requireStaff();
+  const { session } = await requireStaff();
+  const before = await db.query.forms.findFirst({ where: eq(forms.id, formId), columns: { title: true } });
   await db.delete(forms).where(eq(forms.id, formId));
-  revalidatePath("/portal/forms");
-  revalidatePath("/portal/admin/forms");
+  if (before) await logActivity({ actorId: session.user.id, category: "form", summary: `Deleted the form "${before.title}"` });
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal", "layout");
 }
 
 export type SubmitFormResult = { ok: true; submissionId: string } | { ok: false; error: string };
@@ -106,6 +110,7 @@ export async function submitForm(formId: string, answersInput: unknown): Promise
     .returning({ id: formSubmissions.id });
 
   const name = await displayName(session.user.id);
+  await logActivity({ actorId: session.user.id, category: "form", summary: `Submitted the form "${form.title}"` });
   const board = await db
     .select({ email: users.email })
     .from(users)
@@ -118,8 +123,8 @@ export async function submitForm(formId: string, answersInput: unknown): Promise
     });
   }
 
-  revalidatePath("/portal/admin/forms");
-  revalidatePath("/portal/admin");
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal", "layout");
   return { ok: true, submissionId: submission.id };
 }
 
@@ -136,6 +141,7 @@ export async function undoFormSubmission(submissionId: string): Promise<{ ok: bo
   }
 
   await db.delete(formSubmissions).where(eq(formSubmissions.id, submissionId));
+  await logActivity({ actorId: session.user.id, category: "form", summary: `Undid their submission of "${sub.formTitle}"` });
 
   const name = await displayName(session.user.id);
   const board = await db
@@ -150,17 +156,21 @@ export async function undoFormSubmission(submissionId: string): Promise<{ ok: bo
     });
   }
 
-  revalidatePath("/portal/admin/forms");
-  revalidatePath("/portal/admin");
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal", "layout");
   return { ok: true };
 }
 
 export async function markSubmissionReviewed(submissionId: string, reviewed: boolean) {
   const { session } = await requireStaff();
+  const sub = await db.query.formSubmissions.findFirst({ where: eq(formSubmissions.id, submissionId), columns: { formTitle: true } });
+  if (sub) {
+    await logActivity({ actorId: session.user.id, category: "form", summary: `Marked a submission of "${sub.formTitle}" as ${reviewed ? "reviewed" : "new"}` });
+  }
   await db
     .update(formSubmissions)
     .set(reviewed ? { reviewedAt: new Date(), reviewedById: session.user.id } : { reviewedAt: null, reviewedById: null })
     .where(eq(formSubmissions.id, submissionId));
-  revalidatePath("/portal/admin/forms");
-  revalidatePath("/portal/admin");
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal", "layout");
 }

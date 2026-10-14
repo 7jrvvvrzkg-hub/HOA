@@ -9,8 +9,8 @@ import "./globals.css";
 // webfont later if the HOA wants a specific brand typeface.
 
 export const metadata: Metadata = {
-  title: "place holder",
-  description: "place holder (hoa tagline / short description)",
+  title: "Tazewell Place",
+  description: "The resident and owner portal for Tazewell Place, 230 West Tazewell Street, Norfolk, VA.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

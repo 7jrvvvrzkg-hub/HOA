@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { arrayOverlaps } from "drizzle-orm";
 import { db } from "@/db";
 import { leads, users } from "@/db/schema";
@@ -29,6 +30,7 @@ export async function submitContactForm(
   const { name, email, phone, message } = parsed.data;
 
   await db.insert(leads).values({ name, email, phone: phone || null, message });
+  revalidatePath("/portal", "layout");
 
   // fire-and-forget style, but we still await so we can no-op cleanly
   // without an API key configured yet.

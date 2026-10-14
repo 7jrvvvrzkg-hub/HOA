@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession, getFreshRoles } from "@/lib/auth";
-import { isNull } from "drizzle-orm";
-import { db } from "@/db";
-import { formSubmissions } from "@/db/schema";
+import NeedsDot from "@/components/NeedsDot";
+import { getStaffAttention } from "@/lib/attention";
 import { isAdmin, isStaff } from "@/lib/access";
-import { Users, Megaphone, Inbox, ShieldCheck, ClipboardList } from "lucide-react";
+import { Users, Megaphone, Inbox, ShieldCheck, ClipboardList, ScrollText } from "lucide-react";
 
 const tabs = [
   { href: "/portal/admin", label: "Overview", icon: ShieldCheck },
@@ -13,6 +12,7 @@ const tabs = [
   { href: "/portal/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/portal/admin/forms", label: "Forms", icon: ClipboardList },
   { href: "/portal/admin/leads", label: "Leads", icon: Inbox },
+  { href: "/portal/admin/activity", label: "Activity", icon: ScrollText },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -29,7 +29,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/portal");
   }
 
-  const newSubmissions = await db.$count(formSubmissions, isNull(formSubmissions.reviewedAt));
+  const attention = await getStaffAttention();
+  const dotFor: Record<string, boolean> = {
+    "/portal/admin": attention.total > 0,
+    "/portal/admin/forms": attention.forms > 0,
+    "/portal/admin/leads": attention.leads > 0,
+  };
 
   return (
     <div>
@@ -45,9 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             className="flex items-center gap-2 rounded-md border border-cream-dark px-3 py-1.5 text-sm text-ink hover:border-primary hover:text-primary"
           >
             <t.icon size={14} /> {t.label}
-            {t.href === "/portal/admin/forms" && newSubmissions > 0 && (
-              <span className="rounded-full bg-accent px-1.5 text-xs font-semibold text-ink">{newSubmissions}</span>
-            )}
+            <NeedsDot show={dotFor[t.href] ?? false} />
           </Link>
         ))}
       </nav>

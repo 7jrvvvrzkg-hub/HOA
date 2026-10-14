@@ -7,6 +7,8 @@ import { db } from "@/db";
 import { users, residentProfiles, adminAccounts, leads } from "@/db/schema";
 import { requireStaff } from "@/lib/auth";
 import { isAdmin, canManageAccount } from "@/lib/access";
+import { logActivity, nameOf } from "@/lib/activity";
+import { roleLabels } from "@/lib/labels";
 import { createUserSchema } from "@/lib/validation";
 import type { RoleTag, PortalAccessLevel } from "@/db/schema";
 
@@ -104,6 +106,11 @@ export async function createUserProfile(
     }
   });
 
+  await logActivity({
+    actorId: actor.id,
+    category: "account",
+    summary: `Created an account for ${parsed.data.fullName} (${normalizedEmail}) as ${parsed.data.roles.map((r) => roleLabels[r]).join(" + ")}`,
+  });
   revalidatePath("/portal/admin/users");
   return { ok: true };
 }
@@ -160,6 +167,11 @@ export async function setUserRoles(userId: string, roles: RoleTag[]) {
     }
   });
 
+  await logActivity({
+    actorId: actor.id,
+    category: "account",
+    summary: `Changed roles for ${user.email} from ${user.roles.map((r) => roleLabels[r]).join(" + ")} to ${roles.map((r) => roleLabels[r]).join(" + ")}`,
+  });
   revalidatePath("/portal/admin/users");
   revalidatePath(`/portal/admin/users/${userId}`);
 }
@@ -168,8 +180,9 @@ export async function updateResidentAccessLevel(profileId: string, level: Portal
   const actor = await staffActor();
   const profile = await db.query.residentProfiles.findFirst({ where: eq(residentProfiles.id, profileId) });
   if (!profile) throw new Error("profile not found");
-  await loadManageable(actor, profile.userId);
+  const target = await loadManageable(actor, profile.userId);
   await db.update(residentProfiles).set({ portalAccessLevel: level }).where(eq(residentProfiles.id, profileId));
+  await logActivity({ actorId: actor.id, category: "account", summary: `Set portal access for ${target.email} to ${level.toLowerCase()}` });
   revalidatePath("/portal/admin/users");
 }
 
@@ -181,9 +194,11 @@ export async function setUserPassword(userId: string, password: string) {
     throw new Error("password must be at least 8 characters");
   }
   if (password.length > 200) throw new Error("password is too long");
-  await loadManageable(actor, userId);
+  const target = await loadManageable(actor, userId);
   const passwordHash = await bcrypt.hash(password, 10);
-  await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
+  const now = new Date();
+  await db.update(users).set({ passwordHash, updatedAt: now, passwordChangedAt: now }).where(eq(users.id, userId));
+  await logActivity({ actorId: actor.id, category: "account", summary: `Changed the password for ${target.email}` });
   revalidatePath(`/portal/admin/users/${userId}`);
 }
 
@@ -209,8 +224,10 @@ export async function deleteUserAccount(userId: string) {
   // leads.assignedToId is nullable, so free it up rather than blocking the delete on it.
   await db.update(leads).set({ assignedToId: null }).where(eq(leads.assignedToId, userId));
 
+  const deletedLabel = await nameOf(userId);
   try {
     await db.delete(users).where(eq(users.id, userId));
+    await logActivity({ actorId: actor.id, category: "account", summary: `Deleted the account for ${deletedLabel}` });
   } catch {
     throw new Error(
       "can't delete this account — it authored documents or announcements; reassign or delete those first"

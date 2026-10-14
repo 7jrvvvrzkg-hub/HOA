@@ -1,5 +1,6 @@
 import { desc } from "drizzle-orm";
 import { getSession, getFreshRoles } from "@/lib/auth";
+import { getResidentAttention } from "@/lib/attention";
 import { db } from "@/db";
 import { forms } from "@/db/schema";
 import { canView } from "@/lib/access";
@@ -17,6 +18,7 @@ export default async function FormsPage() {
     .from(forms)
     .orderBy(desc(forms.createdAt));
   const visible = all.filter((f) => canView(roles, f.visibility));
+  const todo = new Set((await getResidentAttention(session!.user.id, roles)).formIds);
 
   return (
     <div>
@@ -25,7 +27,7 @@ export default async function FormsPage() {
         <h1 className="text-2xl font-bold text-primary">Forms</h1>
       </div>
       <div className="mt-6">
-        <FormsClient forms={visible.map((f) => ({ id: f.id, title: f.title, description: f.description }))} />
+        <FormsClient forms={visible.map((f) => ({ id: f.id, title: f.title, description: f.description, todo: todo.has(f.id) }))} />
       </div>
     </div>
   );

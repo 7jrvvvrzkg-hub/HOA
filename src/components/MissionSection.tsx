@@ -6,13 +6,14 @@ export default function MissionSection() {
       <div className="grid gap-10 md:grid-cols-2">
         <div>
           <h2 className="text-2xl font-bold text-primary sm:text-3xl">
-            place holder
+            Our Community
           </h2>
           <p className="mt-4 text-ink-soft">
-            place holder
+            Tazewell Place is a condominium community at 230 West Tazewell Street in downtown Norfolk, run by the
+            Tazewell Place Condominium Unit Owners Association.
           </p>
           <p className="mt-4 text-ink-soft">
-            place holder
+            Residents can sign in to read announcements, find association documents, and fill out forms online.
           </p>
         </div>
 

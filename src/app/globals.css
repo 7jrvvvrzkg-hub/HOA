@@ -4,9 +4,9 @@
   /* place holder (brand colors) — swap these for the HOA's real palette
      whenever it's decided; every component below reads from these tokens
      rather than hardcoding colors, so a rebrand is a one-file change. */
-  --color-primary: #2f5233; /* deep forest green */
-  --color-primary-dark: #223d26;
-  --color-primary-light: #4c7a52;
+  --color-primary: #6f2f25; /* deep brick, from the building */
+  --color-primary-dark: #4f211a;
+  --color-primary-light: #94493a;
   --color-accent: #c9a227; /* warm gold */
   --color-accent-dark: #a5811a;
   --color-cream: #f7f5ef;
@@ -81,7 +81,7 @@ body {
 /* Fillable forms: blanks turned into inputs inside the rendered Word file. */
 .docx-holder input.form-blank {
   border: 0;
-  border-bottom: 1.5px solid #2f5233;
+  border-bottom: 1.5px solid #6f2f25;
   background: rgb(47 82 51 / 0.08);
   padding: 1px 4px;
   font: inherit;
@@ -97,7 +97,7 @@ body {
   width: 1.05em;
   height: 1.05em;
   vertical-align: -0.12em;
-  accent-color: #2f5233;
+  accent-color: #6f2f25;
 }
 
 /* Narrow screens: Word pages become one fluid column instead of a fixed
@@ -135,7 +135,7 @@ body {
   display: inline-block;
   min-width: 10ch;
   max-width: 100%;
-  border-bottom: 1.5px solid #2f5233;
+  border-bottom: 1.5px solid #6f2f25;
   background: rgb(47 82 51 / 0.08);
   padding: 1px 4px;
   color: #111;
@@ -146,5 +146,23 @@ body {
 .docx-holder .form-answer-check {
   font-size: 1.15em;
   line-height: 1;
-  color: #2f5233;
+  color: #6f2f25;
+}
+
+/* ---- Animated logo: outline wipes in bottom-to-top, then the solid mark
+   fades over it. Pure CSS (no JS), and skipped entirely for visitors who
+   ask their device to reduce motion. ---- */
+@keyframes logo-wipe {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes logo-fill {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.logo-anim .logo-outline { animation: logo-wipe 1.6s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.logo-anim .logo-fill { opacity: 0; animation: logo-fill 1s ease-out 1.5s forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .logo-anim .logo-outline { animation: none; }
+  .logo-anim .logo-fill { animation: none; opacity: 1; }
 }

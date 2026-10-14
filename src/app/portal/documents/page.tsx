@@ -3,7 +3,9 @@ import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { documents, documentFolders, residentProfiles, users, documentFolderNotes } from "@/db/schema";
 import { canViewDocument, isStaff } from "@/lib/access";
-import { deleteDocument } from "@/actions/documents";
+import { deleteDocument, markDocumentReviewed } from "@/actions/documents";
+import { getResidentAttention } from "@/lib/attention";
+import NeedsDot from "@/components/NeedsDot";
 import { createFolder, renameFolder, deleteFolder, moveDocument } from "@/actions/folders";
 import UploadDocumentForm from "@/components/UploadDocumentForm";
 import { Button } from "@/components/Button";
@@ -23,6 +25,9 @@ export default async function DocumentsPage() {
     with: { assignedTo: { with: { residentProfile: { columns: { fullName: true } } } } },
   });
   const visibleDocs = allDocs.filter((d) => canViewDocument(roles, userId, d));
+
+  const residentAttention = await getResidentAttention(userId, roles);
+  const requestedFolders = new Set(residentAttention.folderIds);
 
   const folders = await db.select().from(documentFolders).orderBy(asc(documentFolders.name));
 
@@ -102,6 +107,7 @@ export default async function DocumentsPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">
                     <Folder size={16} className="text-accent-dark" /> {section.name}
+                    <NeedsDot show={!!section.id && requestedFolders.has(section.id)} />
                   </h2>
                   {isAdmin && section.id && (
                     <div className="flex items-center gap-2">
@@ -155,6 +161,11 @@ export default async function DocumentsPage() {
                                 {(doc.fileSize / 1024).toFixed(0)} kb ·{" "}
                                 {doc.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                               </p>
+                              {isAdmin && doc.visibility === "PERSONAL" && doc.uploadedById === doc.assignedToId && !doc.reviewedAt && (
+                                <p data-needs-review className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-danger">
+                                  <NeedsDot /> Uploaded by the resident — needs review
+                                </p>
+                              )}
                               {doc.visibility === "PERSONAL" && (
                                 <p className="mt-0.5 flex items-center gap-1 text-xs text-accent-dark">
                                   <User size={12} />
@@ -170,6 +181,11 @@ export default async function DocumentsPage() {
                             >
                               <Download size={14} /> Download
                             </a>
+                            {isAdmin && doc.visibility === "PERSONAL" && doc.uploadedById === doc.assignedToId && !doc.reviewedAt && (
+                              <form action={markDocumentReviewed.bind(null, doc.id)}>
+                                <Button type="submit" size="sm">Mark Reviewed</Button>
+                              </form>
+                            )}
                             {isAdmin && (
                               <form action={moveDocument.bind(null, doc.id)} className="flex items-center gap-1">
                                 <select

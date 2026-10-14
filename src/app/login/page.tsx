@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/Button";
+import Logo from "@/components/Logo";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -47,6 +48,9 @@ function LoginForm() {
         <Link href="/" className="text-sm text-primary hover:underline">
           ← Back to homepage
         </Link>
+        <div className="mt-4 flex justify-center">
+          <Logo height={110} animate />
+        </div>
         <h1 className="mt-4 text-2xl font-bold text-primary">Sign In</h1>
         <p className="mt-1 text-sm text-ink-soft">
           Sign in to access documents, the directory, and your profile.
@@ -85,8 +89,8 @@ function LoginForm() {
           </Button>
         </form>
 
-        <p className="mt-6 text-xs text-ink-soft">
-          Forgot your password? Contact the office and an admin can reset it for you.
+        <p className="mt-6 text-sm">
+          <Link href="/forgot-password" className="text-primary hover:underline">Forgot your password?</Link>
         </p>
       </div>
     </div>

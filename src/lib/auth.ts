@@ -2,9 +2,11 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getServerSession } from "next-auth/next";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { cache } from "react";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, activityLog } from "@/db/schema";
+import { logActivity } from "@/lib/activity";
 import type { RoleTag } from "@/db/schema";
 
 export const authOptions: NextAuthOptions = {
@@ -23,17 +25,26 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const attempted = credentials.email.toLowerCase().trim();
         const user = await db.query.users.findFirst({
-          where: eq(users.email, credentials.email.toLowerCase().trim()),
+          where: eq(users.email, attempted),
           with: { residentProfile: true, adminAccount: true },
         });
-        if (!user) return null;
+        if (!user) {
+          await logFailedSignIn(attempted, false);
+          return null;
+        }
 
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          await logFailedSignIn(attempted, true);
+          return null;
+        }
 
         const displayName =
           user.adminAccount?.fullName ?? user.residentProfile?.fullName ?? user.email;
+
+        await logActivity({ actorId: user.id, actorLabel: `${displayName} (${user.email})`, category: "security", summary: "Signed in" });
 
         return {
           id: user.id,
@@ -49,6 +60,10 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.roles = (user as unknown as { roles: RoleTag[] }).roles;
         token.uid = user.id;
+        // When this sign-in happened. Kept across the cookie's automatic
+        // refreshes (unlike the JWT's own issued-at), so a password change
+        // can tell "signed in before the change" from "signed in after".
+        token.signedAt = Date.now();
       }
       return token;
     },
@@ -56,14 +71,47 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.uid as string;
         session.user.roles = (token.roles as RoleTag[]) ?? [];
+        session.signedAt = token.signedAt;
       }
       return session;
     },
   },
 };
 
-export function getSession() {
-  return getServerSession(authOptions);
+/** The current session, or null. Beyond what NextAuth checks, this also
+ * drops a session whose account was deleted, or whose password was changed
+ * after that sign-in — so resetting a password signs out anyone still using
+ * the old one. Deduplicated per request. */
+export const getSession = cache(async () => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return null;
+  const row = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+    columns: { passwordChangedAt: true },
+  });
+  if (!row) return null;
+  if (row.passwordChangedAt && (session.signedAt ?? 0) < row.passwordChangedAt.getTime()) return null;
+  return session;
+});
+
+/** Log a failed sign-in, but stop after 30 in ten minutes so someone
+ * hammering the login can't fill the log. Never records the password. */
+async function logFailedSignIn(email: string, accountExists: boolean) {
+  try {
+    const since = new Date(Date.now() - 10 * 60 * 1000);
+    const [{ n }] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(activityLog)
+      .where(and(eq(activityLog.category, "security"), gt(activityLog.createdAt, since), sql`${activityLog.summary} like 'Failed sign-in%'`));
+    if (n >= 30) return;
+  } catch {
+    return;
+  }
+  await logActivity({
+    actorLabel: email.slice(0, 120),
+    category: "security",
+    summary: accountExists ? "Failed sign-in (wrong password)" : "Failed sign-in (no account with this email)",
+  });
 }
 
 /** The session's roles are a snapshot taken at login and baked into the JWT,

@@ -5,11 +5,12 @@ import { createPortal } from "react-dom";
 import { ClipboardList, X, Undo2, CheckCircle2 } from "lucide-react";
 import { submitForm, undoFormSubmission } from "@/actions/forms";
 import { Button } from "@/components/Button";
+import NeedsDot from "@/components/NeedsDot";
 import { fitDocxToWidth } from "@/lib/docxFit";
 import { activateBlanks, collectAnswers, hasAnyAnswer, type FormField } from "@/lib/formBlanks";
 
-type FormItem = { id: string; title: string; description: string | null };
-type Sent = { submissionId: string; title: string };
+type FormItem = { id: string; title: string; description: string | null; todo?: boolean };
+type Sent = { submissionId: string; title: string; formId?: string };
 
 /** Fills a form: opens the Word file in the same blurred-background viewer
  * documents use, turns its blanks into inputs, and puts Submit at the very
@@ -95,7 +96,7 @@ function FormFiller({
     startTransition(async () => {
       try {
         const result = await submitForm(form.id, collectAnswers(fields));
-        if (result.ok) onSubmitted({ submissionId: result.submissionId, title: form.title });
+        if (result.ok) onSubmitted({ submissionId: result.submissionId, title: form.title, formId: form.id });
         else setError(result.error);
       } catch {
         setError("couldn't submit — please try again");
@@ -218,7 +219,10 @@ export default function FormsClient({ forms }: { forms: FormItem[] }) {
               <div className="flex items-center gap-3">
                 <ClipboardList className="text-primary" size={24} />
                 <div>
-                  <p className="font-medium text-ink">{f.title}</p>
+                  <p className="flex items-center gap-2 font-medium text-ink">
+                    {f.title}
+                    <NeedsDot show={!!f.todo && !sent.some((x) => x.formId === f.id)} />
+                  </p>
                   {f.description && <p className="text-sm text-ink-soft">{f.description}</p>}
                 </div>
               </div>

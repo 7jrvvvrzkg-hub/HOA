@@ -106,7 +106,7 @@ function Viewer({ formId, title, answers, onClose }: { formId: string; title: st
         {status === "error" && <p className="py-10 text-center text-sm text-cream/80">Couldn&apos;t load this form.</p>}
         {status === "mismatch" && (
           <p className="py-10 text-center text-sm text-cream/80">
-            The form was changed after this was submitted, so use the list of answers instead.
+            This form was changed after it was submitted, so it can&apos;t be shown filled out.
           </p>
         )}
         <div ref={holderRef} className={status === "mismatch" ? "hidden" : "docx-holder overflow-x-auto"} />

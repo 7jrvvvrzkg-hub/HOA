@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { announcements, residentProfiles, users } from "@/db/schema";
 import { requireStaff } from "@/lib/auth";
 import { isAdmin } from "@/lib/access";
+import { logActivity } from "@/lib/activity";
 import { announcementSchema } from "@/lib/validation";
 import { sendEmail, announcementEmailTemplate } from "@/lib/email";
 import type { AnnouncementPriority, DocVisibility } from "@/db/schema";
@@ -38,6 +39,8 @@ export async function createAnnouncement(
     .values({ ...parsed.data, authorId: session.user.id })
     .returning();
 
+  await logActivity({ actorId: session.user.id, category: "announcement", summary: `Posted the announcement "${announcement.title}" to ${announcement.audience.toLowerCase().replace(/_/g, " ")}` });
+
   const notifyNow = formData.get("notifyNow") === "on";
   if (notifyNow) {
     const recipients = await db
@@ -64,7 +67,7 @@ export async function updateAnnouncement(
   _prev: AnnouncementFormState,
   formData: FormData
 ): Promise<AnnouncementFormState> {
-  const { roles } = await requireStaff();
+  const { session, roles } = await requireStaff();
 
   const parsed = announcementSchema.safeParse({
     title: formData.get("title"),
@@ -87,14 +90,17 @@ export async function updateAnnouncement(
     .set({ ...parsed.data, updatedAt: new Date() })
     .where(eq(announcements.id, id));
 
+  await logActivity({ actorId: session.user.id, category: "announcement", summary: `Edited the announcement "${parsed.data.title}"` });
   revalidatePath("/");
   revalidatePath("/portal/admin/announcements");
   return { ok: true };
 }
 
 export async function deleteAnnouncement(id: string) {
-  await requireStaff();
+  const { session } = await requireStaff();
+  const before = await db.query.announcements.findFirst({ where: eq(announcements.id, id), columns: { title: true } });
   await db.delete(announcements).where(eq(announcements.id, id));
+  if (before) await logActivity({ actorId: session.user.id, category: "announcement", summary: `Deleted the announcement "${before.title}"` });
   revalidatePath("/");
   revalidatePath("/portal/admin/announcements");
 }

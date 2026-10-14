@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { documents, documentFolders, residentProfiles, users } from "@/db/schema";
-import { requireSignedIn, getFreshRoles } from "@/lib/auth";
+import { requireSignedIn, requireStaff, getFreshRoles } from "@/lib/auth";
 import { isStaff } from "@/lib/access";
+import { logActivity, nameOf } from "@/lib/activity";
 import { sendEmail, documentUpdateTemplate } from "@/lib/email";
 import { isAllowedDocumentFile } from "@/lib/fileTypes";
 import type { DocVisibility } from "@/db/schema";
@@ -111,8 +112,19 @@ export async function uploadDocument(
       fileSize: file.size,
       uploadedById: session.user.id,
       assignedToId,
+      // Staff uploads need no review; a resident's own upload does.
+      reviewedAt: isAdmin ? new Date() : null,
     })
     .returning();
+
+  await logActivity({
+    actorId: session.user.id,
+    category: "document",
+    summary:
+      doc.visibility === "PERSONAL" && doc.assignedToId === session.user.id
+        ? `Uploaded a personal document: "${doc.title}"`
+        : `Uploaded the document "${doc.title}" (${doc.visibility.toLowerCase().replace(/_/g, " ")})`,
+  });
 
   if (notifyAffected) {
     const recipients =
@@ -136,7 +148,7 @@ export async function uploadDocument(
     }
   }
 
-  revalidatePath("/portal/documents");
+  revalidatePath("/portal", "layout");
   return { ok: true };
 }
 
@@ -150,13 +162,26 @@ export async function deleteDocument(id: string) {
   const roles = await getFreshRoles(session.user.id);
   const isAdmin = isStaff(roles);
 
-  if (!isAdmin) {
-    const doc = await db.query.documents.findFirst({ where: eq(documents.id, id) });
-    if (!doc || doc.uploadedById !== session.user.id) {
-      throw new Error("you can only delete documents you uploaded yourself");
-    }
+  const doc = await db.query.documents.findFirst({ where: eq(documents.id, id) });
+  if (!doc) return;
+  if (!isAdmin && doc.uploadedById !== session.user.id) {
+    throw new Error("you can only delete documents you uploaded yourself");
   }
 
   await db.delete(documents).where(eq(documents.id, id));
-  revalidatePath("/portal/documents");
+  await logActivity({ actorId: session.user.id, category: "document", summary: `Deleted the document "${doc.title}"` });
+  revalidatePath("/portal", "layout");
+}
+
+/** Staff: mark a resident's own upload as looked at, so it leaves the
+ * console's review list. */
+export async function markDocumentReviewed(id: string) {
+  const { session } = await requireStaff();
+  const doc = await db.query.documents.findFirst({ where: eq(documents.id, id) });
+  if (!doc) return;
+  await db.update(documents).set({ reviewedAt: new Date() }).where(eq(documents.id, id));
+  const owner = doc.assignedToId ? await nameOf(doc.assignedToId) : "a resident";
+  await logActivity({ actorId: session.user.id, category: "document", summary: `Reviewed "${doc.title}" uploaded by ${owner}` });
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal", "layout");
 }

@@ -69,6 +69,10 @@ export const users = pgTable("users", {
   // or delete accounts they created themselves, and only for one hour after
   // (see src/lib/access.ts), so the creator has to be remembered.
   createdById: text("created_by_id").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+  // Set whenever the password changes. Anyone signed in before this moment
+  // is signed out (see getSession in src/lib/auth.ts), so a reset also
+  // kicks out whoever might have been using the old password.
+  passwordChangedAt: timestamp("password_changed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -138,6 +142,9 @@ export const documents = pgTable("documents", {
   // rather than a building-wide one. Cascades so a deleted account doesn't
   // leave an orphaned personal document behind.
   assignedToId: text("assigned_to_id").references(() => users.id, { onDelete: "cascade" }),
+  // For documents a resident uploaded themselves: set once a board member
+  // has looked at it. Until then it shows up in the console's review list.
+  reviewedAt: timestamp("reviewed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -232,6 +239,30 @@ export const formSubmissions = pgTable("form_submissions", {
   answers: jsonb("answers").$type<FormAnswer[]>().notNull(),
   reviewedAt: timestamp("reviewed_at"),
   reviewedById: text("reviewed_by_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Who did what, and when. Written by the server only (never from a form),
+// and nothing in the app edits or deletes rows. `actorLabel` is a copy of
+// the person's name/email at the time, so the record still reads correctly
+// after an account is deleted.
+export const activityLog = pgTable("activity_log", {
+  id: id(),
+  actorId: text("actor_id").references(() => users.id, { onDelete: "set null" }),
+  actorLabel: text("actor_label").notNull(),
+  category: text("category").notNull(),
+  summary: text("summary").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// One-time password reset links. Only a hash of the token is stored, so a
+// copy of this table can't be used to reset anyone's password.
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: id(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

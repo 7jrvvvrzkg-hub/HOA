@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Menu, X, LogIn, LogOut, Mail, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 import { ButtonLink, Button } from "@/components/Button";
+import Logo from "@/components/Logo";
 
 // "Contact" used to be listed here too, as plain text, right next to the
 // "Contact Us" button below — same destination (#contact), shown twice.
@@ -23,10 +24,10 @@ export default function TopBar() {
     <header className="sticky top-0 z-50 bg-primary text-cream shadow-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cream/10 text-sm">
-            logo
+          <span className="flex h-10 w-9 items-center justify-center rounded-sm bg-cream">
+            <Logo height={34} />
           </span>
-          <span>place holder</span>
+          <span className="font-serif uppercase tracking-[0.18em]">Tazewell Place</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
@@ -77,7 +78,7 @@ export default function TopBar() {
           open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         )}
       >
-        <nav className="flex flex-col gap-3 overflow-hidden pb-4 pt-3 text-sm font-medium">
+        <nav className="flex min-h-0 flex-col gap-3 overflow-hidden text-sm font-medium [&>:first-child]:mt-3 [&>:last-child]:mb-4">
           {navItems.map((item) => (
             <a key={item.href} href={item.href} onClick={() => setOpen(false)}>
               {item.label}

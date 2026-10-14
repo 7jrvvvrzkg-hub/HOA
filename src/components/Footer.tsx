@@ -6,8 +6,8 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-3">
           <div>
-            <p className="font-semibold text-cream">place holder</p>
-            <p className="mt-2 text-sm">tagline</p>
+            <p className="font-semibold uppercase tracking-[0.18em] text-cream">Tazewell Place</p>
+            <p className="mt-2 text-sm">Tazewell Place Condominium Unit Owners Association</p>
           </div>
           <div>
             <p className="font-semibold text-cream">Quick Links</p>
