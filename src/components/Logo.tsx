@@ -23,7 +23,7 @@ export default function Logo({
       priority
       width={Math.round(height * RATIO)}
       height={height}
-      className={clsx("drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]", animate && "logo-build", className)}
+      className={clsx(animate && "logo-build", className)}
       style={{ height, width: "auto" }}
     />
   );
