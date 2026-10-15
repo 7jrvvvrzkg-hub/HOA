@@ -14,6 +14,8 @@ export default function Footer() {
             <ul className="mt-2 space-y-1 text-sm">
               <li><a href="#mission">Community</a></li>
               <li><a href="#announcements">Announcements</a></li>
+              <li><a href="#gallery">Gallery</a></li>
+              <li><a href="#history">History</a></li>
               <li><Link href="/login">Resident Login</Link></li>
               <li><a href="#contact">Contact Us</a></li>
             </ul>

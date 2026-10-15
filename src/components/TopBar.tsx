@@ -14,6 +14,8 @@ import Logo from "@/components/Logo";
 const navItems = [
   { href: "#mission", label: "Community" },
   { href: "#announcements", label: "Announcements" },
+  { href: "#gallery", label: "Gallery" },
+  { href: "#history", label: "History" },
 ];
 
 export default function TopBar() {
@@ -39,10 +41,10 @@ export default function TopBar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
           <Logo height={56} animate />
-          <span className="font-serif uppercase tracking-[0.18em] drop-shadow">Tazewell Place</span>
+          <span className="whitespace-nowrap font-serif uppercase tracking-[0.18em] drop-shadow">Tazewell Place</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
+        <nav className="hidden items-center gap-6 text-sm font-medium lg:flex">
           {navItems.map((item) => (
             <a key={item.href} href={item.href} className="hover:text-accent transition-colors">
               {item.label}
@@ -50,7 +52,7 @@ export default function TopBar() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <a href="#contact">
             <Button variant="ghostInvert" size="sm">
               <Mail size={16} /> Contact Us
@@ -73,7 +75,7 @@ export default function TopBar() {
         </div>
 
         <button
-          className="md:hidden"
+          className="lg:hidden"
           aria-label={open ? "close menu" : "open menu"}
           onClick={() => setOpen((v) => !v)}
         >
@@ -86,7 +88,7 @@ export default function TopBar() {
           gives this a smooth "come down" instead of an instant snap. */}
       <div
         className={clsx(
-          "grid overflow-hidden px-4 transition-[grid-template-rows] duration-300 ease-in-out md:hidden",
+          "grid overflow-hidden px-4 transition-[grid-template-rows] duration-300 ease-in-out lg:hidden",
           // The divider only exists while the menu is open — drawn on the
           // closed (zero-height) panel it showed up as a thin stray line
           // under the bar at the top of the page.
