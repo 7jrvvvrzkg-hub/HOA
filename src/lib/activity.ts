@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { activityLog, users } from "@/db/schema";
 
-export type ActivityCategory = "account" | "document" | "folder" | "announcement" | "form" | "lead" | "security";
+export type ActivityCategory = "account" | "document" | "folder" | "announcement" | "form" | "lead" | "security" | "rollback";
 
 export const activityCategoryLabels: Record<ActivityCategory, string> = {
   account: "Accounts",
@@ -12,6 +12,7 @@ export const activityCategoryLabels: Record<ActivityCategory, string> = {
   form: "Forms",
   lead: "Leads",
   security: "Sign-ins & security",
+  rollback: "Rollbacks",
 };
 
 /** A readable name for someone: their profile name, else their email. */

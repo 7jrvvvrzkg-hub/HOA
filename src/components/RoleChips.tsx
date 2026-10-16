@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import clsx from "clsx";
 import { setUserRoles } from "@/actions/users";
 import type { RoleTag } from "@/db/schema";
@@ -55,7 +55,11 @@ export default function RoleChips({
     setError(null);
     startTransition(async () => {
       try {
-        await setUserRoles(userId, next);
+        const r = await setUserRoles(userId, next);
+        if (!r.ok) {
+          setCurrent(previous);
+          setError(r.error);
+        }
       } catch (e) {
         setCurrent(previous);
         setError(e instanceof Error ? e.message : "couldn't update roles");
@@ -123,20 +127,26 @@ export default function RoleChips({
           </span>
         ))}
         {addable.length > 0 && (
-          <select
-            className="rounded-full border border-cream-dark bg-white px-2 py-1 text-xs text-ink-soft"
-            value=""
-            onChange={(e) => {
-              if (e.target.value) add(e.target.value as RoleTag);
-            }}
-          >
-            <option value="">+ role</option>
-            {addable.map((r) => (
-              <option key={r} value={r}>
-                {roleLabel[r]}
-              </option>
-            ))}
-          </select>
+          // Drawn by hand so the little arrow sits snugly inside the pill
+          // (the browser's own arrow hugs the far right edge).
+          <span className="relative inline-flex items-center">
+            <select
+              aria-label="add a role"
+              className="cursor-pointer appearance-none rounded-full border border-cream-dark bg-white py-1 pl-3 pr-6 text-xs text-ink-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              value=""
+              onChange={(e) => {
+                if (e.target.value) add(e.target.value as RoleTag);
+              }}
+            >
+              <option value="">+ role</option>
+              {addable.map((r) => (
+                <option key={r} value={r}>
+                  {roleLabel[r]}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={12} className="pointer-events-none absolute right-2 text-ink-soft" aria-hidden />
+          </span>
         )}
       </div>
       {error && <p className="mt-1 text-xs text-danger">{error}</p>}

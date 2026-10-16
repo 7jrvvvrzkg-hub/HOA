@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { documents } from "@/db/schema";
 import { canViewDocument } from "@/lib/access";
 import { previewKind, safeContentType } from "@/lib/fileTypes";
+import { ctx, decryptBytes } from "@/lib/crypto";
 
 /** Same access rules as the download route (see that file). Feeds the
  * on-site viewer: raster images and PDF are sent inline, and the Office /
@@ -36,11 +37,20 @@ export async function GET(
     return NextResponse.json({ error: "this file type can't be previewed — download it instead" }, { status: 415 });
   }
 
-  return new NextResponse(new Uint8Array(doc.fileData), {
+  let bytes: Buffer;
+  try {
+    bytes = decryptBytes(doc.fileData, ctx.document(doc.id));
+  } catch (e) {
+    console.error("[documents] couldn't open stored file", doc.id, e);
+    return NextResponse.json({ error: "this file couldn't be opened" }, { status: 500 });
+  }
+
+  return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": safeContentType(kind, doc.mimeType, doc.fileName),
-      "Content-Disposition": `${kind === "image" || kind === "pdf" ? "inline" : "attachment"}; filename="${doc.fileName.replace(/"/g, "")}"`,
-      "Content-Length": String(doc.fileSize),
+      "Content-Disposition": `${kind === "image" || kind === "pdf" ? "inline" : "attachment"}; filename="${doc.fileName.replace(/[^\w.\- ]/g, "")}"`,
+      "Content-Length": String(bytes.length),
+      "Cache-Control": "private, no-store, max-age=0",
       // Belt-and-suspenders alongside the mime-type allow-list on upload —
       // never let the browser guess a different (more dangerous) content
       // type than the one declared here.

@@ -21,8 +21,9 @@ export default function CreateUserForm({ isAdmin = true }: { isAdmin?: boolean }
         <input name="email" type="email" required className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-ink">Password</label>
-        <input name="password" type="text" required minLength={8} className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm" />
+        <label className="block text-sm font-medium text-ink">Temporary Password</label>
+        <input name="password" type="text" required minLength={12} maxLength={72} autoComplete="off" placeholder="At least 12 characters" className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm" />
+      <p className="mt-1 text-xs text-ink-soft">They will be made to choose their own password the first time they sign in.</p>
       </div>
       <div>
         <label className="block text-sm font-medium text-ink">Unit (optional)</label>

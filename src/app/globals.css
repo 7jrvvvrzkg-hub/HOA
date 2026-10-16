@@ -189,3 +189,8 @@ html { scroll-padding-top: 5rem; }
 @media (prefers-reduced-motion: reduce) {
   .lightbox-backdrop, .lightbox-photo { animation: none; }
 }
+
+/* The shrinking bar under the 10-second "Undo" pop-up. */
+@keyframes undo-shrink { from { width: 100%; } to { width: 0%; } }
+.undo-bar { animation-name: undo-shrink; animation-timing-function: linear; animation-fill-mode: forwards; }
+@media (prefers-reduced-motion: reduce) { .undo-bar { animation: none; width: 0; } }

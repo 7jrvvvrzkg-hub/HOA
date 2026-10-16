@@ -5,14 +5,31 @@ import bcrypt from "bcryptjs";
 import { and, arrayContains, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { users, residentProfiles, adminAccounts, leads } from "@/db/schema";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, BCRYPT_COST } from "@/lib/auth";
+import { passwordProblem } from "@/lib/passwordPolicy";
+import { requireStepUp } from "@/lib/stepUp";
 import { isAdmin, canManageAccount } from "@/lib/access";
 import { logActivity, nameOf } from "@/lib/activity";
 import { roleLabels } from "@/lib/labels";
+import { asActor, describeTx, undoTx, UNDO_SECONDS } from "@/lib/history";
+import { notifySecurity } from "@/lib/securityNotice";
 import { createUserSchema } from "@/lib/validation";
 import type { RoleTag, PortalAccessLevel } from "@/db/schema";
 
 export type CreateUserFormState = { ok: boolean; error?: string };
+export type StepResult = { ok: true } | { ok: false; error: string };
+
+/** null when the actor has recently entered a fresh code, else a plain message
+ * (returned, not thrown, because production hides thrown messages from the
+ * browser). */
+async function lockedMessage(actorId: string): Promise<string | null> {
+  try {
+    await requireStepUp(actorId);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : "locked";
+  }
+}
 
 const defaultAccessLevel: Record<RoleTag, PortalAccessLevel> = {
   ADMIN: "FULL",
@@ -62,6 +79,10 @@ export async function createUserProfile(
   const actor = await staffActor();
 
   const roles = formData.getAll("roles") as RoleTag[];
+  if (roles.includes("ADMIN") || roles.includes("DIRECTOR")) {
+    const locked = await lockedMessage(actor.id);
+    if (locked) return { ok: false, error: locked };
+  }
   if (!isAdmin(actor.roles) && roles.some((r) => r !== "OWNER" && r !== "RENTER")) {
     return { ok: false, error: "directors can only create owner or renter profiles" };
   }
@@ -76,11 +97,14 @@ export async function createUserProfile(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid submission" };
   }
 
+  const problem = passwordProblem(parsed.data.password, { email: parsed.data.email, name: parsed.data.fullName });
+  if (problem) return { ok: false, error: problem };
+
   const normalizedEmail = parsed.data.email.toLowerCase();
   const existing = await db.query.users.findFirst({ where: eq(users.email, normalizedEmail) });
   if (existing) return { ok: false, error: "an account with that email already exists" };
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  const passwordHash = await bcrypt.hash(parsed.data.password, BCRYPT_COST);
   const isAdminRole = parsed.data.roles.includes("ADMIN") || parsed.data.roles.includes("DIRECTOR");
   const isResidentRole = parsed.data.roles.includes("OWNER") || parsed.data.roles.includes("RENTER");
   const primaryAccessLevel: PortalAccessLevel = isAdminRole
@@ -90,7 +114,15 @@ export async function createUserProfile(
   await db.transaction(async (tx) => {
     const [user] = await tx
       .insert(users)
-      .values({ email: normalizedEmail, passwordHash, roles: parsed.data.roles, createdById: actor.id })
+      .values({
+        email: normalizedEmail,
+        passwordHash,
+        roles: parsed.data.roles,
+        createdById: actor.id,
+        // The temporary password is known to whoever created the account, so
+        // the new person has to replace it with their own at first sign-in.
+        mustChangePassword: true,
+      })
       .returning();
 
     if (isAdminRole) {
@@ -134,8 +166,10 @@ export async function createUserProfile(
  *    go wrong.
  *  - the last remaining admin account can't have its ADMIN tag removed by
  *    anyone, since that would lock every admin out of the console for good. */
-export async function setUserRoles(userId: string, roles: RoleTag[]) {
+export async function setUserRoles(userId: string, roles: RoleTag[]): Promise<StepResult> {
   const actor = await staffActor();
+  const locked = await lockedMessage(actor.id);
+  if (locked) return { ok: false, error: locked };
   if (roles.length === 0) throw new Error("a profile needs at least one role");
 
   if (userId === actor.id) {
@@ -174,6 +208,7 @@ export async function setUserRoles(userId: string, roles: RoleTag[]) {
   });
   revalidatePath("/portal/admin/users");
   revalidatePath(`/portal/admin/users/${userId}`);
+  return { ok: true };
 }
 
 export async function updateResidentAccessLevel(profileId: string, level: PortalAccessLevel) {
@@ -184,22 +219,37 @@ export async function updateResidentAccessLevel(profileId: string, level: Portal
   await db.update(residentProfiles).set({ portalAccessLevel: level }).where(eq(residentProfiles.id, profileId));
   await logActivity({ actorId: actor.id, category: "account", summary: `Set portal access for ${target.email} to ${level.toLowerCase()}` });
   revalidatePath("/portal/admin/users");
+  return { ok: true };
 }
 
 /** Set a new password for an account. Admins for any account; a director
  * only for one they created, within the first hour. */
-export async function setUserPassword(userId: string, password: string) {
+export async function setUserPassword(userId: string, password: string): Promise<StepResult> {
   const actor = await staffActor();
-  if (typeof password !== "string" || password.length < 8) {
-    throw new Error("password must be at least 8 characters");
-  }
-  if (password.length > 200) throw new Error("password is too long");
+  const locked = await lockedMessage(actor.id);
+  if (locked) return { ok: false, error: locked };
   const target = await loadManageable(actor, userId);
-  const passwordHash = await bcrypt.hash(password, 10);
+  const problem = passwordProblem(password, { email: target.email });
+  if (problem) throw new Error(problem);
+  const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
   const now = new Date();
-  await db.update(users).set({ passwordHash, updatedAt: now, passwordChangedAt: now }).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({
+      passwordHash,
+      updatedAt: now,
+      passwordChangedAt: now,
+      // Someone else chose this password, so the owner must replace it —
+      // except when changing your own.
+      mustChangePassword: userId !== actor.id,
+    })
+    .where(eq(users.id, userId));
+  if (userId !== actor.id) {
+    await notifySecurity(target.email, "Your password was just changed by the office. You'll be asked to choose your own the next time you sign in.");
+  }
   await logActivity({ actorId: actor.id, category: "account", summary: `Changed the password for ${target.email}` });
   revalidatePath(`/portal/admin/users/${userId}`);
+  return { ok: true };
 }
 
 /** Permanently delete a login and everything tied to it
@@ -209,30 +259,62 @@ export async function setUserPassword(userId: string, password: string) {
  * user authored (documents, announcements) has a required author reference
  * with no cascade, so deleting an account that posted any of that fails
  * with a clear error instead of silently orphaning rows. */
-export async function deleteUserAccount(userId: string) {
-  const actor = await staffActor();
-  if (userId === actor.id) {
-    throw new Error("you can't delete your own account");
-  }
+export type DeleteResult = { ok: true; undoToken: string; label: string } | { ok: false; error: string };
 
-  const user = await loadManageable(actor, userId);
+export async function deleteUserAccount(userId: string): Promise<DeleteResult> {
+  const actor = await staffActor();
+  const locked = await lockedMessage(actor.id);
+  if (locked) return { ok: false, error: locked };
+  if (userId === actor.id) return { ok: false, error: "you can't delete your own account" };
+
+  let user;
+  try {
+    user = await loadManageable(actor, userId);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "you can't change this account" };
+  }
 
   if (user.roles.includes("ADMIN") && (await countOtherAdmins(userId)) === 0) {
-    throw new Error("can't delete the last admin account");
+    return { ok: false, error: "can't delete the last admin account" };
   }
-
-  // leads.assignedToId is nullable, so free it up rather than blocking the delete on it.
-  await db.update(leads).set({ assignedToId: null }).where(eq(leads.assignedToId, userId));
 
   const deletedLabel = await nameOf(userId);
+  let txid: string;
   try {
-    await db.delete(users).where(eq(users.id, userId));
-    await logActivity({ actorId: actor.id, category: "account", summary: `Deleted the account for ${deletedLabel}` });
+    // One transaction, labelled with who did it, so "Undo" can put all of it
+    // back (the account, its profile, its documents and notes).
+    ({ txid } = await asActor(actor.id, async (tx) => {
+      // leads.assignedToId is nullable, so free it up rather than blocking the delete on it.
+      await tx.update(leads).set({ assignedToId: null }).where(eq(leads.assignedToId, userId));
+      await tx.delete(users).where(eq(users.id, userId));
+    }));
   } catch {
-    throw new Error(
-      "can't delete this account — it authored documents or announcements; reassign or delete those first"
-    );
+    return {
+      ok: false,
+      error: "can't delete this account — it authored documents or announcements; reassign or delete those first",
+    };
   }
+  await logActivity({ actorId: actor.id, category: "account", summary: `Deleted the account for ${deletedLabel}` });
 
   revalidatePath("/portal/admin/users");
+  return { ok: true, undoToken: txid, label: deletedLabel };
+}
+
+/** Put a just-deleted account back (only by whoever deleted it, shortly after). */
+export async function undoDeleteAccount(undoToken: string): Promise<StepResult> {
+  const actor = await staffActor();
+  const info = await describeTx(String(undoToken ?? ""));
+  if (!info || !info.firstUserDelete) return { ok: false, error: "nothing to undo" };
+  if (info.actorId !== actor.id) return { ok: false, error: "only the person who deleted the account can undo it" };
+  if (info.ageSeconds > UNDO_SECONDS) return { ok: false, error: "it's too late to undo that here — use Roll back in the Activity log" };
+  try {
+    await undoTx(String(undoToken), actor.id);
+  } catch (e) {
+    console.error("[undo] failed", e);
+    return { ok: false, error: "couldn't undo that — nothing was changed" };
+  }
+  const restored = String(info.firstUserDelete.email ?? "the account");
+  await logActivity({ actorId: actor.id, category: "account", summary: `Undid the deletion of the account for ${restored}` });
+  revalidatePath("/portal/admin/users");
+  return { ok: true };
 }

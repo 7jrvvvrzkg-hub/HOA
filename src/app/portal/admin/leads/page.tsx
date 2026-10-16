@@ -1,3 +1,4 @@
+import { staffPage } from "@/lib/auth";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
@@ -13,6 +14,8 @@ const statusTag: Record<string, string> = {
 };
 
 export default async function AdminLeadsPage() {
+  // Every admin page checks for itself — a layout check alone can be skipped.
+  await staffPage();
   const leadList = await db.query.leads.findMany({
     orderBy: desc(leads.createdAt),
     with: { assignedTo: { columns: { email: true } } },

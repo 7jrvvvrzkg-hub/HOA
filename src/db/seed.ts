@@ -1,8 +1,8 @@
 /**
  * Seeds ~10 test profiles so val can click through every role before
- * sending this off. See CREDENTIALS.md for the full login list — the
- * admin1/owner1/renter1 accounts below are the ones meant for quick manual
- * testing.
+ * sending this off. LOCAL TESTING ONLY: these accounts have well-known
+ * passwords, so this script refuses to run against anything but a database on
+ * this computer.
  *
  * Run with: npm run db:seed  (after DATABASE_URL is set and the schema has
  * been pushed with npm run db:push)
@@ -27,7 +27,15 @@ async function findOrCreateUser(email: string, passwordHash: string, roles: ("AD
   return created;
 }
 
+function assertLocalDatabase() {
+  const url = process.env.DATABASE_URL ?? "";
+  if (!/@(localhost|127\.0\.0\.1)(:|\/)/.test(url)) {
+    throw new Error("Refusing to seed: DATABASE_URL isn't a local database. Test accounts have known passwords and must never be created in a real database.");
+  }
+}
+
 async function main() {
+  assertLocalDatabase();
   console.log("seeding place holder (hoa name) test data...");
 
   const adminHash = await hash(TEST_PASSWORD_ADMIN);
@@ -135,7 +143,7 @@ async function main() {
     ]);
   }
 
-  console.log("done. see CREDENTIALS.md for the full login list.");
+  console.log("done. (local test accounts only — never seed a real database.)");
 }
 
 main()

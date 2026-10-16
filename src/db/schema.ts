@@ -73,8 +73,56 @@ export const users = pgTable("users", {
   // is signed out (see getSession in src/lib/auth.ts), so a reset also
   // kicks out whoever might have been using the old password.
   passwordChangedAt: timestamp("password_changed_at"),
+  // True after someone ELSE set this password (an admin creating the account
+  // or resetting it). The person must choose their own before doing anything.
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
+  // Two-step login. The secret is stored encrypted (src/lib/crypto.ts).
+  // "pending" is a secret that has been shown but not yet confirmed with a
+  // first correct code; it only becomes the real one on confirmation.
+  totpSecret: text("totp_secret"),
+  totpPendingSecret: text("totp_pending_secret"),
+  totpEnabledAt: timestamp("totp_enabled_at"),
+  // The last 30-second window already used, so a code can't be used twice.
+  totpLastStep: integer("totp_last_step"),
+  // When this person last proved themselves with a fresh code. Sensitive
+  // admin actions (passwords, roles, deleting accounts) only work for a few
+  // minutes after this (src/lib/stepUp.ts).
+  stepUpAt: timestamp("step_up_at"),
+  // One-time backup codes, stored as hashes only.
+  recoveryCodes: text("recovery_codes").array().notNull().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Every failed sign-in, used to lock out guessing. Successful sign-ins clear
+// that email's failures. Old rows are swept out automatically.
+export const loginAttempts = pgTable("login_attempts", {
+  id: id(),
+  identifier: text("identifier").notNull(),
+  ip: text("ip"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// One row per sign-in, so an admin can see where an account is signed in and
+// end any of them (src/lib/sessions.ts). The browser's cookie carries only the
+// id; whether it is still valid is decided here, on every request.
+export const userSessions = pgTable("user_sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  ip: text("ip"),
+  city: text("city"),
+  region: text("region"),
+  country: text("country"),
+  device: text("device").notNull().default("Unknown device"),
+  browser: text("browser"),
+  os: text("os"),
+  userAgent: text("user_agent"),
+  revokedAt: timestamp("revoked_at"),
+  revokedById: text("revoked_by_id").references(() => users.id, { onDelete: "set null" }),
+  revokedReason: text("revoked_reason"),
 });
 
 // "resident database" — owners and renters. Each resident can only edit
@@ -159,6 +207,11 @@ export const announcements = pgTable("announcements", {
   active: boolean("active").notNull().default(true),
   audience: docVisibilityEnum("audience").notNull().default("ALL_RESIDENTS"),
   authorId: text("author_id").notNull().references(() => users.id),
+  // An optional picture shown on the right of the announcement. Stored
+  // (encrypted) in the database like documents are.
+  imageData: bytea("image_data"),
+  imageMimeType: text("image_mime_type"),
+  imageSize: integer("image_size"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -236,7 +289,9 @@ export const formSubmissions = pgTable("form_submissions", {
   formId: text("form_id").references(() => forms.id, { onDelete: "set null" }),
   formTitle: text("form_title").notNull(),
   submittedById: text("submitted_by_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  answers: jsonb("answers").$type<FormAnswer[]>().notNull(),
+  // Stored encrypted as {"enc": "..."} (src/lib/crypto.ts); rows from before
+  // encryption was switched on are a plain array until the backfill runs.
+  answers: jsonb("answers").$type<FormAnswer[] | { enc: string }>().notNull(),
   reviewedAt: timestamp("reviewed_at"),
   reviewedById: text("reviewed_by_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),

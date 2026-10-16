@@ -9,6 +9,7 @@ import { isStaff } from "@/lib/access";
 import { logActivity, nameOf } from "@/lib/activity";
 import { sendEmail, documentUpdateTemplate } from "@/lib/email";
 import { isAllowedDocumentFile } from "@/lib/fileTypes";
+import { ctx, encryptBytes, encryptionConfigured } from "@/lib/crypto";
 import type { DocVisibility } from "@/db/schema";
 
 export type DocumentFormState = { ok: boolean; error?: string };
@@ -98,17 +99,26 @@ export async function uploadDocument(
     return { ok: false, error: "file is larger than the 4MB limit" };
   }
 
+  // Refuse (rather than quietly store it in the clear) if the encryption key
+  // hasn't been set up on the server.
+  if (!encryptionConfigured()) {
+    return { ok: false, error: "secure storage isn't switched on for this site yet — tell the site administrator" };
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
+  const docId = crypto.randomUUID();
 
   const [doc] = await db
     .insert(documents)
     .values({
+      id: docId,
       title,
       folderId,
       visibility,
       fileName: file.name,
       mimeType: file.type || "application/octet-stream",
-      fileData: buffer,
+      // Encrypted before it reaches the database; bound to this row's id.
+      fileData: encryptBytes(buffer, ctx.document(docId)),
       fileSize: file.size,
       uploadedById: session.user.id,
       assignedToId,

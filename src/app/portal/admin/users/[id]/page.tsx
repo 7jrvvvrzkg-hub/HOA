@@ -5,14 +5,17 @@ import { residentProfiles, documentFolders, documentFolderNotes } from "@/db/sch
 import { addAdminNote, addCommunicationLog } from "@/actions/notes";
 import { setDocumentFolderNote } from "@/actions/documentNotes";
 import SetPasswordForm from "@/components/SetPasswordForm";
-import { updateResidentAccessLevel, deleteUserAccount } from "@/actions/users";
-import { getSession, getFreshRoles } from "@/lib/auth";
+import { updateResidentAccessLevel } from "@/actions/users";
+import { Button } from "@/components/Button";
+import DeleteAccountButton from "@/components/DeleteAccountButton";
+import { getSession, getFreshRoles, staffPage } from "@/lib/auth";
 import { isAdmin as hasAdmin, canManageAccount, editMinutesLeft } from "@/lib/access";
 import { accessLevelLabels, communicationChannelLabels } from "@/lib/labels";
-import { Button } from "@/components/Button";
 import { StickyNote, Phone, FileText } from "lucide-react";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Every admin page checks for itself — a layout check alone can be skipped.
+  await staffPage();
   const { id } = await params;
   const session = await getSession();
 
@@ -175,9 +178,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           <p className="mt-1 text-sm text-ink-soft">
             This can&apos;t be undone.
           </p>
-          <form action={deleteUserAccount.bind(null, profile.userId)} className="mt-3">
-            <Button type="submit" size="sm" variant="danger">Delete Account</Button>
-          </form>
+          <div className="mt-3">
+            <DeleteAccountButton userId={profile.userId} name={`${profile.fullName} · ${profile.user.email}`} label="Delete Account" afterHref="/portal/admin/users" />
+          </div>
         </div>
       )}
     </div>

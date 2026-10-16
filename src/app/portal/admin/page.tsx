@@ -1,3 +1,4 @@
+import { staffPage } from "@/lib/auth";
 import Link from "next/link";
 import { desc, eq, isNull, ne } from "drizzle-orm";
 import { db } from "@/db";
@@ -38,6 +39,8 @@ function Section({
 }
 
 export default async function AdminOverviewPage() {
+  // Every admin page checks for itself — a layout check alone can be skipped.
+  await staffPage();
   const [userCount, documentCount, announcementCount, openLeadCount, attention] = await Promise.all([
     db.$count(users),
     db.$count(documents),
@@ -48,6 +51,8 @@ export default async function AdminOverviewPage() {
 
   const [pendingForms, newLeads, pendingDocs, recent] = await Promise.all([
     db.query.formSubmissions.findMany({
+      // Only who/what/when is shown here — never open the encrypted answers.
+      columns: { answers: false },
       where: isNull(formSubmissions.reviewedAt),
       orderBy: desc(formSubmissions.createdAt),
       limit: 5,

@@ -4,6 +4,8 @@ import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { documents } from "@/db/schema";
 import { canViewDocument } from "@/lib/access";
+import { ctx, decryptBytes } from "@/lib/crypto";
+import { logActivity } from "@/lib/activity";
 
 export async function GET(
   _request: Request,
@@ -27,11 +29,31 @@ export async function GET(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  return new NextResponse(new Uint8Array(doc.fileData), {
+  let bytes: Buffer;
+  try {
+    bytes = decryptBytes(doc.fileData, ctx.document(doc.id));
+  } catch (e) {
+    console.error("[documents] couldn't open stored file", doc.id, e);
+    return NextResponse.json({ error: "this file couldn't be opened" }, { status: 500 });
+  }
+
+  // Downloading anything that isn't yours leaves a trail (opening your own
+  // upload, or a document assigned to you, isn't recorded — that's just noise).
+  if (doc.assignedToId !== session.user.id && doc.uploadedById !== session.user.id) {
+    await logActivity({
+      actorId: session.user.id,
+      category: "document",
+      summary: `Downloaded ${doc.visibility === "PERSONAL" ? "the personal document" : "the document"} "${doc.title}"`,
+    });
+  }
+
+  return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": doc.mimeType,
-      "Content-Disposition": `attachment; filename="${doc.fileName.replace(/"/g, "")}"`,
-      "Content-Length": String(doc.fileSize),
+      "Content-Disposition": `attachment; filename="${doc.fileName.replace(/[^\w.\- ]/g, "")}"`,
+      "Content-Length": String(bytes.length),
+      // Private documents are never kept by the browser cache or any proxy.
+      "Cache-Control": "private, no-store, max-age=0",
       "X-Content-Type-Options": "nosniff",
     },
   });

@@ -2,14 +2,15 @@ import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { getSession, getFreshRoles } from "@/lib/auth";
+import { getSession, getFreshRoles, staffPage } from "@/lib/auth";
 import { isAdmin as hasAdmin, canManageAccount, editMinutesLeft } from "@/lib/access";
-import { deleteUserAccount } from "@/actions/users";
+import DeleteAccountButton from "@/components/DeleteAccountButton";
 import RoleChips from "@/components/RoleChips";
 import CreateUserForm from "@/components/CreateUserForm";
-import { Button } from "@/components/Button";
 
 export default async function AdminUsersPage() {
+  // Every admin page checks for itself — a layout check alone can be skipped.
+  await staffPage();
   const session = await getSession();
   const myRoles = await getFreshRoles(session!.user.id);
   const viewerIsAdmin = hasAdmin(myRoles);
@@ -84,15 +85,16 @@ export default async function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-3">
+                        <Link href={`/portal/admin/users/sessions/${u.id}`} className="whitespace-nowrap text-primary hover:underline">
+                          Sessions
+                        </Link>
                         {u.residentProfile && (
-                          <Link href={`/portal/admin/users/${u.residentProfile.id}`} className="text-primary hover:underline">
+                          <Link href={`/portal/admin/users/${u.residentProfile.id}`} className="whitespace-nowrap text-primary hover:underline">
                             View →
                           </Link>
                         )}
                         {!isSelf && manageable && (
-                          <form action={deleteUserAccount.bind(null, u.id)}>
-                            <Button type="submit" size="sm" variant="danger">Delete</Button>
-                          </form>
+                          <DeleteAccountButton userId={u.id} name={`${u.adminAccount?.fullName ?? u.residentProfile?.fullName ?? "No name"} · ${u.email}`} />
                         )}
                       </div>
                     </td>

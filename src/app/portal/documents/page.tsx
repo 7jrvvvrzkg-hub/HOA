@@ -21,6 +21,8 @@ export default async function DocumentsPage() {
   const userId = session!.user.id;
 
   const allDocs = await db.query.documents.findMany({
+    // The list never needs the file contents themselves.
+    columns: { fileData: false },
     orderBy: desc(documents.createdAt),
     with: { assignedTo: { with: { residentProfile: { columns: { fullName: true } } } } },
   });

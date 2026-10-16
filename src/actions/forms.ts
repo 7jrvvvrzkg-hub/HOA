@@ -8,6 +8,7 @@ import { requireSignedIn, requireStaff, getFreshRoles } from "@/lib/auth";
 import { canView } from "@/lib/access";
 import { logActivity } from "@/lib/activity";
 import { formAnswersSchema } from "@/lib/validation";
+import { ctx, encryptBytes, encryptJson, encryptionConfigured } from "@/lib/crypto";
 import { sendEmail, formSubmittedTemplate, formWithdrawnTemplate } from "@/lib/email";
 import type { DocVisibility } from "@/db/schema";
 
@@ -52,14 +53,20 @@ export async function uploadForm(_prev: UploadFormState, formData: FormData): Pr
     return { ok: false, error: "that doesn't look like a real Word (.docx) file" };
   }
 
+  if (!encryptionConfigured()) {
+    return { ok: false, error: "secure storage isn't switched on for this site yet — tell the site administrator" };
+  }
+
   await logActivity({ actorId: session.user.id, category: "form", summary: `Added the form "${title}"` });
+  const formId = crypto.randomUUID();
   await db.insert(forms).values({
+    id: formId,
     title,
     description: description || null,
     visibility,
     fileName: file.name,
     mimeType: DOCX_MIME,
-    fileData: buffer,
+    fileData: encryptBytes(buffer, ctx.form(formId)),
     fileSize: buffer.length,
     uploadedById: session.user.id,
   });
@@ -99,13 +106,21 @@ export async function submitForm(formId: string, answersInput: unknown): Promise
     return { ok: false, error: "fill in at least one line before submitting" };
   }
 
+  if (!encryptionConfigured()) {
+    return { ok: false, error: "secure storage isn't switched on for this site yet — tell the site administrator" };
+  }
+
+  // The filled-in answers (names, addresses, signatures, whatever the form
+  // asks) are stored encrypted and bound to this submission's id.
+  const submissionId = crypto.randomUUID();
   const [submission] = await db
     .insert(formSubmissions)
     .values({
+      id: submissionId,
       formId: form.id,
       formTitle: form.title,
       submittedById: session.user.id,
-      answers: parsed.data,
+      answers: encryptJson(parsed.data, ctx.answers(submissionId)),
     })
     .returning({ id: formSubmissions.id });
 

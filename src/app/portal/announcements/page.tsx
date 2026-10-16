@@ -1,26 +1,23 @@
 import Link from "next/link";
-import { desc, asc } from "drizzle-orm";
+import { desc, asc, getTableColumns } from "drizzle-orm";
 import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { announcements } from "@/db/schema";
 import { canView, isStaff } from "@/lib/access";
 import { announcementPriorityLabels } from "@/lib/labels";
-import { Megaphone, Pin, Pencil } from "lucide-react";
-import clsx from "clsx";
-
-const priorityTag: Record<string, string> = {
-  URGENT: "bg-danger text-cream",
-  IMPORTANT: "bg-warning text-ink",
-  NORMAL: "bg-primary text-cream",
-};
+import { Megaphone, Pencil } from "lucide-react";
+import AnnouncementCard from "@/components/AnnouncementCard";
+import { SITE_TIME_ZONE } from "@/lib/time";
 
 export default async function AnnouncementsPage() {
   const session = await getSession();
   const roles = await getFreshRoles(session!.user.id);
   const isAdmin = isStaff(roles);
 
+  const { imageData: _omit, ...columns } = getTableColumns(announcements);
+  void _omit;
   const all = await db
-    .select()
+    .select(columns)
     .from(announcements)
     .orderBy(desc(announcements.pinned), asc(announcements.sortOrder), desc(announcements.createdAt));
   const visible = all.filter((a) => (isAdmin ? true : a.active && canView(roles, a.audience)));
@@ -44,24 +41,21 @@ export default async function AnnouncementsPage() {
 
       <div className="mt-8 space-y-4">
         {visible.map((a) => (
-          <div key={a.id} className="rounded-lg border border-cream-dark bg-white p-5">
-            <div className="flex items-center gap-2">
-              {a.pinned && <Pin size={14} className="text-accent" />}
-              <h3 className="font-semibold text-ink">{a.title}</h3>
-              <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", priorityTag[a.priority])}>
-                {announcementPriorityLabels[a.priority]}
-              </span>
-              {!a.active && (
-                <span className="rounded-full bg-ink-soft/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-ink-soft">
-                  inactive
-                </span>
-              )}
-            </div>
-            <p className="mt-2 text-sm text-ink-soft">{a.body}</p>
-            <p className="mt-2 text-xs text-ink-soft/70">
-              {a.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-            </p>
-          </div>
+          <AnnouncementCard
+            key={a.id}
+            variant="list"
+            a={{
+              id: a.id,
+              title: a.title,
+              body: a.body,
+              priority: a.priority,
+              priorityLabel: announcementPriorityLabels[a.priority],
+              pinned: a.pinned,
+              inactive: !a.active,
+              dateText: a.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: SITE_TIME_ZONE }),
+              imageUrl: a.imageMimeType ? `/api/announcement-image/${a.id}?v=${a.updatedAt.getTime()}` : null,
+            }}
+          />
         ))}
       </div>
     </div>

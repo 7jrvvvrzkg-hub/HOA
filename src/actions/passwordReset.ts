@@ -7,6 +7,8 @@ import { db } from "@/db";
 import { users, passwordResetTokens } from "@/db/schema";
 import { logActivity } from "@/lib/activity";
 import { sendEmail, passwordResetTemplate, passwordChangedTemplate } from "@/lib/email";
+import { BCRYPT_COST } from "@/lib/auth";
+import { passwordProblem } from "@/lib/passwordPolicy";
 
 export type ResetRequestState = { done: boolean };
 export type ResetState = { ok: boolean; error?: string };
@@ -88,8 +90,6 @@ export async function resetLinkIsValid(token: string) {
 export async function resetPassword(token: string, _prev: ResetState, formData: FormData): Promise<ResetState> {
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
-  if (password.length < 8) return { ok: false, error: "password must be at least 8 characters" };
-  if (password.length > 200) return { ok: false, error: "password is too long" };
   if (password !== confirm) return { ok: false, error: "the two passwords don't match" };
 
   const expired = { ok: false, error: "this link has expired or was already used — ask for a new one" };
@@ -104,7 +104,11 @@ export async function resetPassword(token: string, _prev: ResetState, formData: 
   });
   if (!row) return expired;
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const owner = await db.query.users.findFirst({ where: eq(users.id, row.userId), columns: { email: true } });
+  const problem = passwordProblem(password, { email: owner?.email });
+  if (problem) return { ok: false, error: problem };
+
+  const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
   const now = new Date();
   // Claim the token and change the password together; claiming first (and
   // checking it still wasn't used) means two simultaneous uses can't both win.
@@ -115,7 +119,7 @@ export async function resetPassword(token: string, _prev: ResetState, formData: 
       .where(and(eq(passwordResetTokens.id, row.id), isNull(passwordResetTokens.usedAt)))
       .returning({ id: passwordResetTokens.id });
     if (taken.length === 0) return false;
-    await tx.update(users).set({ passwordHash, passwordChangedAt: now, updatedAt: now }).where(eq(users.id, row.userId));
+    await tx.update(users).set({ passwordHash, passwordChangedAt: now, updatedAt: now, mustChangePassword: false }).where(eq(users.id, row.userId));
     await tx
       .update(passwordResetTokens)
       .set({ usedAt: now })

@@ -1,3 +1,4 @@
+import { staffPage } from "@/lib/auth";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { forms, formSubmissions } from "@/db/schema";
@@ -6,8 +7,12 @@ import UploadFormForm from "@/components/UploadFormForm";
 import FilledFormViewer from "@/components/FilledFormViewer";
 import { Button } from "@/components/Button";
 import { docVisibilityLabels } from "@/lib/labels";
+import { ctx, decryptJson } from "@/lib/crypto";
+import type { FormAnswer } from "@/db/schema";
 
 export default async function AdminFormsPage() {
+  // Every admin page checks for itself — a layout check alone can be skipped.
+  await staffPage();
   const formList = await db
     .select({ id: forms.id, title: forms.title, visibility: forms.visibility, createdAt: forms.createdAt })
     .from(forms)
@@ -21,6 +26,16 @@ export default async function AdminFormsPage() {
         with: { residentProfile: { columns: { fullName: true, unit: true } }, adminAccount: { columns: { fullName: true } } },
       },
     },
+  });
+  // The filled-in answers are stored encrypted; open them here, on the server,
+  // only for staff (this page is behind the admin layout's staff check).
+  const opened = submissions.map((s) => {
+    try {
+      return { ...s, answers: decryptJson<FormAnswer[]>(s.answers, ctx.answers(s.id)) };
+    } catch (e) {
+      console.error("[forms] couldn't open a submission", s.id, e);
+      return { ...s, answers: [{ label: "This submission couldn't be opened", value: "" }] as FormAnswer[] };
+    }
   });
   const newCount = submissions.filter((s) => !s.reviewedAt).length;
 
@@ -39,7 +54,7 @@ export default async function AdminFormsPage() {
           </p>
         ) : (
           <div className="mt-3 space-y-3">
-            {submissions.map((s) => {
+            {opened.map((s) => {
               const who =
                 s.submittedBy.residentProfile?.fullName ?? s.submittedBy.adminAccount?.fullName ?? s.submittedBy.email;
               return (

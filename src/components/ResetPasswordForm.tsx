@@ -28,11 +28,12 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           name="password"
           type="password"
           required
-          minLength={8}
-          maxLength={200}
+          minLength={12}
+          maxLength={72}
           autoComplete="new-password"
           className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm focus:border-primary focus:outline-none"
         />
+        <p className="mt-1 text-xs text-ink-soft">At least 12 characters. A few random words strung together works well.</p>
       </div>
       <div>
         <label className="block text-sm font-medium text-ink" htmlFor="confirm">Type It Again</label>
@@ -41,7 +42,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           name="confirm"
           type="password"
           required
-          minLength={8}
+          minLength={12}
           maxLength={200}
           autoComplete="new-password"
           className="mt-1 w-full rounded-md border border-cream-dark px-3 py-2 text-sm focus:border-primary focus:outline-none"

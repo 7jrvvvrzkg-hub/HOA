@@ -1,7 +1,7 @@
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession, getFreshRoles } from "@/lib/auth";
+import { getSessionState, getFreshRoles } from "@/lib/auth";
 import SignOutButton from "@/components/SignOutButton";
 import NeedsDot from "@/components/NeedsDot";
 import AutoRefresh from "@/components/AutoRefresh";
@@ -14,12 +14,17 @@ import {
   Megaphone,
   ShieldCheck,
   ClipboardList,
+  KeyRound,
 } from "lucide-react";
 import { isStaff, isAdmin as hasAdmin } from "@/lib/access";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const state = await getSessionState();
+  if (!state) redirect("/login");
+  // A temporary password to replace, or two-step login to switch on, comes
+  // before anything else in the portal.
+  if (state.gate) redirect("/security");
+  const session = state.session;
 
   // Fresh from the database rather than the session's cached roles, so the
   // "Admin Console" link disappears immediately if someone's admin access
@@ -42,6 +47,7 @@ export default async function PortalLayout({ children }: { children: React.React
     { href: "/portal/forms", label: "Forms", icon: ClipboardList, dot: residentAttention.forms > 0 },
     { href: "/portal/announcements", label: "Announcements", icon: Megaphone, dot: false },
     { href: "/portal/profile", label: "Profile", icon: UserCircle, dot: false },
+    { href: "/security", label: "Security", icon: KeyRound, dot: !state.twoStepOn },
   ];
 
   return (

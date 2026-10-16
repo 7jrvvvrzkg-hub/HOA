@@ -17,7 +17,11 @@ export default function SetPasswordForm({ userId }: { userId: string }) {
     setMessage(null);
     startTransition(async () => {
       try {
-        await setUserPassword(userId, password);
+        const r = await setUserPassword(userId, password);
+        if (!r.ok) {
+          setMessage({ ok: false, text: r.error });
+          return;
+        }
         setPassword("");
         setMessage({ ok: true, text: "Password changed." });
       } catch (err) {
@@ -34,7 +38,7 @@ export default function SetPasswordForm({ userId }: { userId: string }) {
         type="text"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        minLength={8}
+        minLength={12}
         required
         autoComplete="off"
         className="rounded-md border border-cream-dark px-2 py-1 text-sm"

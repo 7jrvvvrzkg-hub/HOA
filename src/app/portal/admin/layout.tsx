@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession, getFreshRoles } from "@/lib/auth";
+import { stepUpValidUntil } from "@/lib/stepUp";
+import StepUpBar from "@/components/StepUpBar";
 import NeedsDot from "@/components/NeedsDot";
+import UndoToastHost from "@/components/UndoToastHost";
 import { getStaffAttention } from "@/lib/attention";
 import { isAdmin, isStaff } from "@/lib/access";
-import { Users, Megaphone, Inbox, ShieldCheck, ClipboardList, ScrollText } from "lucide-react";
+import { Users, Megaphone, Inbox, ShieldCheck, ClipboardList, ScrollText, KeyRound } from "lucide-react";
 
 const tabs = [
   { href: "/portal/admin", label: "Overview", icon: ShieldCheck },
@@ -14,6 +17,8 @@ const tabs = [
   { href: "/portal/admin/leads", label: "Leads", icon: Inbox },
   { href: "/portal/admin/activity", label: "Activity", icon: ScrollText },
 ];
+// Admin-only (directors never see encryption or two-step controls).
+const adminOnlyTabs = [{ href: "/portal/admin/security", label: "Security", icon: KeyRound }];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Defense in depth: proxy.ts already redirects non-admins away from
@@ -30,6 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const attention = await getStaffAttention();
+  const unlockedUntil = await stepUpValidUntil(session.user.id);
   const dotFor: Record<string, boolean> = {
     "/portal/admin": attention.total > 0,
     "/portal/admin/forms": attention.forms > 0,
@@ -42,8 +48,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <ShieldCheck className="text-accent-dark" size={22} />
         <h1 className="text-xl font-bold text-primary">{isAdmin(roles) ? "Admin Console" : "Director Console"}</h1>
       </div>
+      <StepUpBar untilIso={unlockedUntil ? unlockedUntil.toISOString() : null} />
       <nav className="mt-4 flex flex-wrap gap-2">
-        {tabs.map((t) => (
+        {[...tabs, ...(isAdmin(roles) ? adminOnlyTabs : [])].map((t) => (
           <Link
             key={t.href}
             href={t.href}
@@ -55,6 +62,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         ))}
       </nav>
       <div className="mt-6">{children}</div>
+      <UndoToastHost />
     </div>
   );
 }

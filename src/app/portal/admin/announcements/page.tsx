@@ -1,7 +1,7 @@
-import { desc, asc } from "drizzle-orm";
+import { desc, asc, getTableColumns } from "drizzle-orm";
 import { db } from "@/db";
 import { announcements } from "@/db/schema";
-import { getSession, getFreshRoles } from "@/lib/auth";
+import { getSession, getFreshRoles, staffPage } from "@/lib/auth";
 import { isAdmin } from "@/lib/access";
 import { deleteAnnouncement, reorderAnnouncement } from "@/actions/announcements";
 import AnnouncementForm from "@/components/AnnouncementForm";
@@ -9,10 +9,14 @@ import { Button } from "@/components/Button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
 export default async function AdminAnnouncementsPage() {
+  // Every admin page checks for itself — a layout check alone can be skipped.
+  await staffPage();
   const session = await getSession();
   const allowAdminOnly = isAdmin(await getFreshRoles(session!.user.id));
+  const { imageData: _omit, ...columns } = getTableColumns(announcements);
+  void _omit;
   const announcementList = await db
-    .select()
+    .select(columns)
     .from(announcements)
     .orderBy(desc(announcements.pinned), asc(announcements.sortOrder), desc(announcements.createdAt));
 
@@ -49,7 +53,7 @@ export default async function AdminAnnouncementsPage() {
                 </span>
               </summary>
               <div className="border-t border-cream-dark p-4">
-                <AnnouncementForm existing={a} allowAdminOnly={allowAdminOnly} />
+                <AnnouncementForm existing={{ ...a, imageUrl: a.imageMimeType ? `/api/announcement-image/${a.id}?v=${a.updatedAt.getTime()}` : null }} allowAdminOnly={allowAdminOnly} />
               </div>
             </details>
           ))}

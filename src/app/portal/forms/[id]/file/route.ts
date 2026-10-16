@@ -4,6 +4,7 @@ import { getSession, getFreshRoles } from "@/lib/auth";
 import { db } from "@/db";
 import { forms } from "@/db/schema";
 import { canView } from "@/lib/access";
+import { ctx, decryptBytes } from "@/lib/crypto";
 
 const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -21,12 +22,20 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const roles = await getFreshRoles(session.user.id);
   if (!canView(roles, form.visibility)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  return new NextResponse(new Uint8Array(form.fileData), {
+  let bytes: Buffer;
+  try {
+    bytes = decryptBytes(form.fileData, ctx.form(form.id));
+  } catch (e) {
+    console.error("[forms] couldn't open stored file", form.id, e);
+    return NextResponse.json({ error: "this form couldn't be opened" }, { status: 500 });
+  }
+
+  return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": DOCX_MIME,
       "Content-Disposition": `attachment; filename="${form.fileName.replace(/[^\w.\- ]/g, "")}"`,
-      "Content-Length": String(form.fileSize),
-      "Cache-Control": "private, no-store",
+      "Content-Length": String(bytes.length),
+      "Cache-Control": "private, no-store, max-age=0",
       "X-Content-Type-Options": "nosniff",
     },
   });

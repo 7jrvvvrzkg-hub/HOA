@@ -9,9 +9,34 @@ import { isAdmin } from "@/lib/access";
 import { logActivity } from "@/lib/activity";
 import { announcementSchema } from "@/lib/validation";
 import { sendEmail, announcementEmailTemplate } from "@/lib/email";
+import { ctx, encryptBytes, encryptionConfigured } from "@/lib/crypto";
+import { sniffImageMime } from "@/lib/fileTypes";
 import type { AnnouncementPriority, DocVisibility } from "@/db/schema";
 
 export type AnnouncementFormState = { ok: boolean; error?: string };
+
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+
+type ImageChange =
+  | { kind: "none" }
+  | { kind: "remove" }
+  | { kind: "set"; data: Buffer; mime: string };
+
+/** Read the optional picture off the form. The type is judged by the file's
+ * real contents (not its name), and only plain raster images are accepted. */
+async function readImage(formData: FormData): Promise<{ change: ImageChange } | { error: string }> {
+  const file = formData.get("image");
+  if (file instanceof File && file.size > 0) {
+    if (file.size > MAX_IMAGE_BYTES) return { error: "That picture is too big (4MB at most). Try a smaller one." };
+    const data = Buffer.from(await file.arrayBuffer());
+    const mime = sniffImageMime(data);
+    if (!mime) return { error: "The picture must be a JPG, PNG, WebP or GIF image." };
+    if (!encryptionConfigured()) return { error: "Encryption isn't set up on this server yet, so pictures can't be saved." };
+    return { change: { kind: "set", data, mime } };
+  }
+  if (formData.get("removeImage") === "on") return { change: { kind: "remove" } };
+  return { change: { kind: "none" } };
+}
 
 export async function createAnnouncement(
   _prev: AnnouncementFormState,
@@ -34,10 +59,25 @@ export async function createAnnouncement(
     return { ok: false, error: "directors can post to all residents, owners or renters" };
   }
 
+  const img = await readImage(formData);
+  if ("error" in img) return { ok: false, error: img.error };
+
+  const newId = crypto.randomUUID();
   const [announcement] = await db
     .insert(announcements)
-    .values({ ...parsed.data, authorId: session.user.id })
-    .returning();
+    .values({
+      ...parsed.data,
+      id: newId,
+      authorId: session.user.id,
+      ...(img.change.kind === "set"
+        ? {
+            imageData: encryptBytes(img.change.data, ctx.announcementImage(newId)),
+            imageMimeType: img.change.mime,
+            imageSize: img.change.data.length,
+          }
+        : {}),
+    })
+    .returning({ id: announcements.id, title: announcements.title, body: announcements.body, audience: announcements.audience });
 
   await logActivity({ actorId: session.user.id, category: "announcement", summary: `Posted the announcement "${announcement.title}" to ${announcement.audience.toLowerCase().replace(/_/g, " ")}` });
 
@@ -85,9 +125,24 @@ export async function updateAnnouncement(
     return { ok: false, error: "directors can post to all residents, owners or renters" };
   }
 
+  const img = await readImage(formData);
+  if ("error" in img) return { ok: false, error: img.error };
+
   await db
     .update(announcements)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({
+      ...parsed.data,
+      updatedAt: new Date(),
+      ...(img.change.kind === "set"
+        ? {
+            imageData: encryptBytes(img.change.data, ctx.announcementImage(id)),
+            imageMimeType: img.change.mime,
+            imageSize: img.change.data.length,
+          }
+        : img.change.kind === "remove"
+          ? { imageData: null, imageMimeType: null, imageSize: null }
+          : {}),
+    })
     .where(eq(announcements.id, id));
 
   await logActivity({ actorId: session.user.id, category: "announcement", summary: `Edited the announcement "${parsed.data.title}"` });

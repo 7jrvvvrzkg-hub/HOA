@@ -29,7 +29,7 @@ export const announcementSchema = z.object({
 
 export const createUserSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8, "password (temporary password) must be at least 8 characters"),
+  password: z.string().min(1, "enter a temporary password").max(200),
   fullName: z.string().min(1).max(200),
   roles: z.array(z.enum(["ADMIN", "DIRECTOR", "OWNER", "RENTER"])).min(1),
   unit: z.string().max(100).optional().or(z.literal("")),

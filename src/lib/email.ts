@@ -1,5 +1,5 @@
 /**
- * place holder email automation.
+ * Tazewell Place email automation.
  *
  * Sends through Resend's HTTP API directly (no SDK dependency needed).
  * If RESEND_API_KEY / EMAIL_FROM aren't set — e.g. on a first test deploy —
@@ -9,7 +9,7 @@
  */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM ?? "place holder (sender name) <noreply@place-holder-domain.example>";
+const EMAIL_FROM = process.env.EMAIL_FROM ?? "Tazewell Place <noreply@place-holder-domain.example>";
 
 type SendArgs = {
   to: string | string[];
@@ -48,38 +48,79 @@ export async function sendEmail({ to, subject, html }: SendArgs) {
   return { ok: true, skipped: false };
 }
 
-function wrapper(title: string, bodyHtml: string) {
-  return `
-  <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color:#1f2a24;">
-    <div style="background:#2f5233; padding:20px 24px; border-radius:8px 8px 0 0;">
-      <span style="color:#f4efe1; font-size:18px; font-weight:bold; letter-spacing:3px; text-transform:uppercase;">Tazewell Place</span>
-    </div>
-    <div style="border:1px solid #e5e1d6; border-top:none; padding:24px; border-radius:0 0 8px 8px;">
-      <h2 style="margin-top:0; color:#2f5233;">${title}</h2>
-      ${bodyHtml}
-      <p style="margin-top:32px; font-size:12px; color:#7a7a70;">
-        Tazewell Place Condominium Association · 230 West Tazewell Street, Norfolk, VA
-      </p>
-    </div>
-  </div>`;
+/** The site's public address, for links and the logo inside emails. */
+function siteUrl() {
+  return (process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+}
+
+// Brand colors (same as the website).
+const GREEN = "#2f5233";
+const GREEN_DARK = "#223d26";
+const GOLD = "#c9a227";
+const CREAM = "#f7f5ef";
+const CREAM_DARK = "#efe9d8";
+const INK = "#22281f";
+const INK_SOFT = "#4b5346";
+
+/** A gold-on-green button that works in every email program (a plain link
+ * styled as a button, with a table around it for Outlook). */
+function button(href: string, label: string) {
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0;"><tr>
+    <td style="background:${GREEN};border-radius:6px;border-bottom:3px solid ${GOLD};">
+      <a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:${CREAM};text-decoration:none;">${escapeHtml(label)}</a>
+    </td></tr></table>`;
+}
+
+function wrapper(title: string, bodyHtml: string, preheader = "") {
+  const logo = `${siteUrl()}/images/email-logo.png`;
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(title)}</title></head>
+<body style="margin:0;padding:0;background:${CREAM};">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${CREAM};">${escapeHtml(preheader || title)}</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:${CREAM};">
+    <tr><td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background:#ffffff;border:1px solid ${CREAM_DARK};border-radius:10px;overflow:hidden;">
+        <tr><td align="center" style="background:${GREEN};padding:26px 24px 20px;border-bottom:4px solid ${GOLD};">
+          <img src="${escapeHtml(logo)}" alt="Tazewell Place" height="60" style="display:block;margin:0 auto 12px;height:60px;width:auto;border:0;">
+          <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;letter-spacing:5px;text-transform:uppercase;color:${CREAM};font-weight:bold;">Tazewell Place</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${GOLD};margin-top:6px;">Condominium Association</div>
+        </td></tr>
+        <tr><td style="padding:28px 28px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:${INK};">
+          <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.3;color:${GREEN};">${escapeHtml(title)}</h1>
+          ${bodyHtml}
+        </td></tr>
+        <tr><td style="padding:20px 28px 26px;">
+          <div style="border-top:1px solid ${CREAM_DARK};padding-top:16px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:${INK_SOFT};text-align:center;">
+            Tazewell Place Condominium Association<br>230 West Tazewell Street, Norfolk, VA<br>
+            <a href="${escapeHtml(siteUrl())}" style="color:${GREEN};">${escapeHtml(siteUrl().replace(/^https?:\/\//, ""))}</a>
+          </div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
 }
 
 /** Sent to a resident right after they submit the contact form. */
 export function contactAcknowledgementTemplate(name: string) {
   return wrapper(
-    "we received your message",
-    `<p>hi ${escapeHtml(name)},</p>
-     <p>place holder (acknowledgement copy — thanks for reaching out, someone from the community team will respond within place holder (response-time SLA)).</p>`
+    "We received your message",
+    `<p>Hi ${escapeHtml(name)},</p>
+     <p>Thank you for reaching out to Tazewell Place. Your message came through and someone from the community will get back to you soon.</p>
+     <p style="color:${INK_SOFT};font-size:13px;">If your question is urgent, please contact the office directly.</p>`,
+    "Thanks for reaching out. We'll be in touch soon."
   );
 }
 
-/** Sent to admins when a new contact-form / help request lead comes in. */
+/** Sent to admins and directors when a new contact-form / help request lead comes in. */
 export function adminLeadAlertTemplate(name: string, email: string, message: string) {
   return wrapper(
-    "new help request",
-    `<p><strong>from:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
-     <p><strong>message:</strong><br/>${escapeHtml(message)}</p>
-     <p>place holder (link to open this lead in the admin console)</p>`
+    "New help request",
+    `<p><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
+     <p><strong>Message:</strong></p>
+     <p style="background:${CREAM};border-left:4px solid ${GOLD};padding:12px 14px;white-space:pre-line;">${escapeHtml(message)}</p>
+     ${button(`${siteUrl()}/portal/admin/leads`, "Open it in the admin console")}`,
+    `New help request from ${name}`
   );
 }
 
@@ -87,25 +128,28 @@ export function adminLeadAlertTemplate(name: string, email: string, message: str
 export function announcementEmailTemplate(title: string, body: string) {
   return wrapper(
     title,
-    `<p>${escapeHtml(body)}</p>
-     <p>place holder (link back to the announcements board)</p>`
+    `<p style="white-space:pre-line;">${escapeHtml(body)}</p>
+     ${button(`${siteUrl()}/portal/announcements`, "Read it on the announcements board")}`,
+    "A new announcement from Tazewell Place"
   );
 }
 
 /** Event reminder template. */
 export function eventReminderTemplate(eventName: string, whenText: string) {
   return wrapper(
-    `reminder: ${eventName}`,
-    `<p>place holder (reminder copy) — ${escapeHtml(eventName)} is coming up on ${escapeHtml(whenText)}.</p>`
+    `Reminder: ${eventName}`,
+    `<p>${escapeHtml(eventName)} is coming up on <strong>${escapeHtml(whenText)}</strong>.</p>`,
+    `${eventName} is coming up`
   );
 }
 
 /** Document-update notice — e.g. "bylaws were updated" — sent to affected residents only. */
 export function documentUpdateTemplate(docTitle: string) {
   return wrapper(
-    "a document was updated",
-    `<p>place holder (document-update copy) — "${escapeHtml(docTitle)}" was just updated in the document repository.</p>
-     <p>place holder (link to the document repo)</p>`
+    "A document was updated",
+    `<p>&ldquo;${escapeHtml(docTitle)}&rdquo; was just updated in the document repository.</p>
+     ${button(`${siteUrl()}/portal/documents`, "Open the documents page")}`,
+    `${docTitle} was updated`
   );
 }
 
@@ -120,36 +164,51 @@ function escapeHtml(input: string) {
 /** Sent to the board when a resident submits a form. */
 export function formSubmittedTemplate(formTitle: string, residentName: string) {
   return wrapper(
-    "new form submission",
-    `<p>${escapeHtml(residentName)} submitted "${escapeHtml(formTitle)}".</p>
-     <p>Sign in to the portal and open the Forms tab in the admin console to read it.</p>`
+    "New form submission",
+    `<p>${escapeHtml(residentName)} submitted &ldquo;${escapeHtml(formTitle)}&rdquo;.</p>
+     ${button(`${siteUrl()}/portal/admin/forms`, "Read it in the Forms tab")}`,
+    `${residentName} submitted ${formTitle}`
   );
 }
 
 /** Follow-up when a resident undoes a submission right after sending it. */
 export function formWithdrawnTemplate(formTitle: string, residentName: string) {
   return wrapper(
-    "form submission withdrawn",
-    `<p>${escapeHtml(residentName)} undid their submission of "${escapeHtml(formTitle)}". It has been removed from the inbox.</p>`
+    "Form submission withdrawn",
+    `<p>${escapeHtml(residentName)} undid their submission of &ldquo;${escapeHtml(formTitle)}&rdquo;. It has been removed from the inbox.</p>`,
+    `${residentName} withdrew ${formTitle}`
   );
 }
 
 /** Password reset link. Valid for one hour, one use. */
 export function passwordResetTemplate(link: string) {
   return wrapper(
-    "reset your password",
+    "Reset your password",
     `<p>Someone asked to reset the password for this account. If that was you, use the button below within one hour.</p>
-     <p><a href="${escapeHtml(link)}" style="display:inline-block;background:#2f5233;color:#f4efe1;padding:10px 18px;border-radius:6px;text-decoration:none;">Choose a new password</a></p>
-     <p style="font-size:13px;color:#555;">If the button doesn't work, copy this address into your browser:<br/>${escapeHtml(link)}</p>
-     <p style="font-size:13px;color:#555;">If you didn't ask for this, you can ignore this message. Your password won't change.</p>`
+     ${button(link, "Choose a new password")}
+     <p style="font-size:13px;color:${INK_SOFT};">If the button doesn't work, copy this address into your browser:<br><span style="word-break:break-all;">${escapeHtml(link)}</span></p>
+     <p style="font-size:13px;color:${INK_SOFT};">If you didn't ask for this, you can ignore this message. Your password won't change.</p>`,
+    "Use this link within one hour to choose a new password"
   );
 }
 
 /** Sent after a password has been changed with a reset link. */
 export function passwordChangedTemplate() {
   return wrapper(
-    "your password was changed",
-    `<p>The password for your account was just changed. If that was you, nothing more to do.</p>
-     <p>If it wasn't you, contact the office right away.</p>`
+    "Your password was changed",
+    `<p>The password for your Tazewell Place account was just changed. If that was you, there's nothing more to do.</p>
+     <p><strong>If it wasn't you,</strong> contact the office right away.</p>`,
+    "The password for your account was just changed"
+  );
+}
+
+/** Heads-up about a change to how an account is protected (two-step login
+ * turned on/off, a backup code used, password changed by someone else). */
+export function securityNoticeTemplate(what: string) {
+  return wrapper(
+    "Account security notice",
+    `<p>${escapeHtml(what)}</p>
+     <p>If this was you, there is nothing more to do. If it wasn't, contact the office right away and change your password.</p>`,
+    what
   );
 }
