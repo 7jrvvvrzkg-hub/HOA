@@ -59,11 +59,6 @@ export default async function UserSessionsPage({ params }: { params: Promise<{ u
         <Link href="/portal/admin/users" className="text-sm text-primary hover:underline">← Back to Users</Link>
         <h2 className="mt-2 text-lg font-semibold text-primary">Sign-ins for {name}</h2>
         <p className="font-plain mt-0.5 break-all text-sm text-ink-soft">{target.email}</p>
-        <p className="mt-2 max-w-2xl text-xs text-ink-soft">
-          Where this account is signed in right now. The place is a guess from the network address (it can be the
-          internet provider&apos;s city, and a VPN or mobile data can show somewhere else), and the device is what the
-          browser says it is. A Mac can&apos;t be told apart as a MacBook or an iMac.
-        </p>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -102,7 +97,7 @@ export default async function UserSessionsPage({ params }: { params: Promise<{ u
                         <Globe size={14} className="mt-0.5 shrink-0" /> IP {s.ip ?? "unknown"}
                       </p>
                       <p className="font-plain mt-1 text-xs text-ink-soft/80">
-                        Signed in {fmtDateTime(s.createdAt)} · last active {ago(s.lastSeenAt)} · ends by {fmtDateTime(s.expiresAt)}
+                        Signed in {fmtDateTime(s.createdAt)} · last active {ago(s.lastSeenAt)}
                       </p>
                     </div>
                   </div>

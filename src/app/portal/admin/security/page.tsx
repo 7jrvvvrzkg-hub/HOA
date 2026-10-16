@@ -133,10 +133,6 @@ export default async function SecurityAdminPage() {
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-xs text-ink-soft">
-          &quot;Reset&quot; is for someone who lost their phone and their backup codes. It signs them out everywhere and makes
-          them set up a new phone at their next sign-in. You can&apos;t reset your own — ask another admin.
-        </p>
       </section>
 
       <section className="rounded-lg border border-cream-dark bg-white p-5">

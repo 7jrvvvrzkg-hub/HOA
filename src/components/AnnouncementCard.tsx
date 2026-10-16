@@ -72,11 +72,11 @@ export default function AnnouncementCard({
   }, [open]);
 
   const content = (
-    <div className="flex gap-3">
+    <div className="flex min-w-0 gap-3">
       <div className="min-w-0 flex-1">
         <div className={clsx("flex flex-wrap items-center gap-2", variant === "list" && "mb-1")}>
           {variant === "list" && a.pinned && <Pin size={14} className="text-accent" />}
-          <h3 ref={titleRef} className="line-clamp-2 min-w-0 font-semibold text-ink">{a.title}</h3>
+          <h3 ref={titleRef} className="line-clamp-2 min-w-0 max-w-full [overflow-wrap:anywhere] font-semibold text-ink">{a.title}</h3>
           {variant === "list" && (
             <>
               <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", style.tag)}>{a.priorityLabel}</span>
@@ -88,7 +88,7 @@ export default function AnnouncementCard({
         </div>
         <p
           ref={bodyRef}
-          className={clsx("whitespace-pre-line break-words text-sm text-ink-soft", variant === "sticky" ? "mt-2 line-clamp-4" : "mt-1 line-clamp-3")}
+          className={clsx("max-w-full whitespace-pre-line [overflow-wrap:anywhere] text-sm text-ink-soft", variant === "sticky" ? "mt-2 line-clamp-4" : "mt-1 line-clamp-3")}
         >
           {a.body}
         </p>
@@ -130,10 +130,10 @@ export default function AnnouncementCard({
           }
         }}
         className={clsx(
-          "cursor-pointer text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+          "block min-w-0 max-w-full cursor-pointer text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           variant === "sticky"
             ? clsx("pin-card relative rounded-sm bg-[#fdf6e3] p-5 shadow-lg ring-1 transition-transform hover:-translate-y-1 hover:rotate-0", tilt, style.ring)
-            : "rounded-lg border border-cream-dark bg-white p-5 transition-shadow hover:shadow-md"
+            : "overflow-hidden rounded-lg border border-cream-dark bg-white p-5 transition-shadow hover:shadow-md"
         )}
       >
         {variant === "sticky" && (
@@ -181,9 +181,9 @@ export default function AnnouncementCard({
                     {a.pinned && <span className="inline-flex items-center gap-1 text-xs text-ink-soft"><Pin size={12} /> Pinned</span>}
                     <span className="text-xs text-ink-soft/80">{a.dateText}</span>
                   </div>
-                  <h2 id={`ann-${a.id}`} className="mt-3 break-words text-2xl font-bold leading-snug text-primary sm:text-3xl">{a.title}</h2>
+                  <h2 id={`ann-${a.id}`} className="mt-3 [overflow-wrap:anywhere] text-2xl font-bold leading-snug text-primary sm:text-3xl">{a.title}</h2>
                   <div className="my-4 h-px bg-black/10" />
-                  <p className="whitespace-pre-line break-words text-base leading-relaxed text-ink">{a.body}</p>
+                  <p className="whitespace-pre-line [overflow-wrap:anywhere] text-base leading-relaxed text-ink">{a.body}</p>
                 </div>
               </div>
             </article>

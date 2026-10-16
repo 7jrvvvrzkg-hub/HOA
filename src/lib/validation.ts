@@ -20,7 +20,7 @@ export const profileUpdateSchema = z.object({
 
 export const announcementSchema = z.object({
   title: z.string().min(1).max(200),
-  body: z.string().min(1).max(4000),
+  body: z.string().min(1).max(100000),
   priority: z.enum(["NORMAL", "IMPORTANT", "URGENT"]),
   pinned: z.boolean(),
   active: z.boolean(),

@@ -76,9 +76,6 @@ export default function RollbackPanel({ sinceText, todayIso }: { sinceText: stri
           <div>
             <h3 className="text-base font-semibold text-ink">Roll back the site</h3>
             <p className="font-plain mt-1 max-w-2xl text-sm text-ink-soft">
-              Pick a day and time (Eastern). Everything added, changed or deleted after that moment is undone:
-              accounts, profiles, documents, folders, forms, announcements, leads and notes go back to how they were.
-              The Activity log itself is never changed, and current passwords and two-step settings stay as they are.
               Changes are remembered back to <strong>{sinceText}</strong>.
             </p>
           </div>
@@ -149,9 +146,7 @@ export default function RollbackPanel({ sinceText, todayIso }: { sinceText: stri
                 </table>
               </div>
               <p className="font-plain mt-2 text-xs text-ink-soft">
-                Anything people added after that moment is removed, including new accounts. You&apos;ll need your
-                6-digit code unlocked in the bar at the top. A rollback can itself be rolled back by choosing the
-                moment just before it.
+                Anything added after that moment, including new accounts, will be removed.
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                 <label className="font-plain block text-sm font-medium text-ink">

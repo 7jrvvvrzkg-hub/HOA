@@ -90,7 +90,7 @@ export default async function PortalLayout({ children }: { children: React.React
           <SignOutButton />
         </div>
       </aside>
-      <main className="flex-1 p-4 sm:p-8">{children}</main>
+      <main className="min-w-0 flex-1 p-4 sm:p-8">{children}</main>
       <AutoRefresh />
     </div>
   );

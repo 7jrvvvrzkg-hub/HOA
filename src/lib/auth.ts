@@ -20,9 +20,10 @@ import type { RoleTag } from "@/db/schema";
  * 10 still work and are upgraded the next time that person signs in. */
 export const BCRYPT_COST = 12;
 
-/** A signed-in session ends after this long no matter what, so a stolen or
- * forgotten browser session dies by itself. */
-export const SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
+/** Sign-ins are effectively permanent: they last until the person signs out,
+ * an admin ends the session, or the password changes. (Ten years is just the
+ * "never" the cookie and the database row need a number for.) */
+export const SESSION_MAX_AGE_SECONDS = 10 * 365 * 24 * 60 * 60;
 
 /** Roles that must use two-step login. Staff by default. Set
  * MFA_REQUIRED_ROLES="ADMIN,DIRECTOR,OWNER,RENTER" to require it for everyone. */
@@ -183,8 +184,7 @@ export type SecurityGate = "change-password" | "setup-2fa" | null;
 /** The signed-in session plus anything still standing between this person and
  * the portal: a temporary password that must be replaced, or two-step login
  * that must be turned on. Also drops a session whose account was deleted,
- * whose password changed after that sign-in, or that is older than the
- * maximum session length. Deduplicated per request. */
+ * or whose password changed after that sign-in. Deduplicated per request. */
 export const getSessionState = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
@@ -198,7 +198,6 @@ export const getSessionState = cache(async () => {
   if (!(await sessionIsValid(session.sid, session.user.id))) return null;
   const signedAt = session.signedAt ?? 0;
   if (row.passwordChangedAt && signedAt < row.passwordChangedAt.getTime()) return null;
-  if (Date.now() - signedAt > SESSION_MAX_AGE_SECONDS * 1000) return null;
 
   let gate: SecurityGate = null;
   if (row.mustChangePassword) gate = "change-password";

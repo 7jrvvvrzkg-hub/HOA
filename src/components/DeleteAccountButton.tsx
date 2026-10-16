@@ -91,8 +91,7 @@ export default function DeleteAccountButton({
                   <h2 id="delete-title" className="text-lg font-semibold text-ink">Delete this account?</h2>
                   <p className="font-plain mt-1 break-words text-sm font-semibold text-ink">{name}</p>
                   <p id="delete-desc" className="font-plain mt-2 text-sm text-ink-soft">
-                    This removes their login, profile, notes and any personal documents. You&apos;ll get 10 seconds to
-                    undo it right after.
+                    You&apos;ll have 10 seconds to undo.
                   </p>
                 </div>
               </div>
